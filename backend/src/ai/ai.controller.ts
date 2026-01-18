@@ -19,4 +19,14 @@ export class AiController {
     async explainSnippet(@Body() body: { code: string; language: string }) {
         return this.aiService.explainSnippet(body.code, body.language);
     }
+
+    @Post('summarize-project')
+    async summarizeProject(@Body() body: { projectId: string }) {
+        return this.aiService.summarizeProject(body.projectId);
+    }
+
+    @Post('analyze-scope')
+    async analyzeScope(@Body() body: { projectId: string }) {
+        return this.aiService.analyzeScope(body.projectId);
+    }
 }

@@ -14,9 +14,17 @@ interface BurndownData {
     blockedTasks: any[]; // define stricter type if possible, utilizing standard Task type
 }
 
+interface RiskAnalysis {
+    risk: 'LOW' | 'MEDIUM' | 'HIGH';
+    reason: string;
+    recommendation: string;
+}
+
 export function ProgressTab({ projectId }: Props) {
     const [data, setData] = useState<BurndownData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [riskAnalysis, setRiskAnalysis] = useState<RiskAnalysis | null>(null);
+    const [analyzingRisk, setAnalyzingRisk] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -31,6 +39,20 @@ export function ProgressTab({ projectId }: Props) {
             console.error(error);
         } finally {
             setLoading(false);
+        }
+    }
+
+    async function handleAnalyzeRisk() {
+        setAnalyzingRisk(true);
+        try {
+            // Lazy import to avoid circular dep issues in index if any, though api is safe
+            const { analyzeScope } = await import('@/lib/api');
+            const result = await analyzeScope(projectId);
+            setRiskAnalysis(result);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setAnalyzingRisk(false);
         }
     }
 
@@ -104,26 +126,77 @@ export function ProgressTab({ projectId }: Props) {
                     </CardContent>
                 </Card>
 
-                {/* Quick Stats or Recommendations could go here */}
-                <Card>
-                    <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Project Health</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Total Tasks:</span>
-                            <span className="font-medium">{chartData.length > 0 ? chartData[0].ideal : 0}</span> {/* Approx from start point */}
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Remaining:</span>
-                            <span className="font-medium">{chartData.length > 0 ? chartData[chartData.length - 1].actual : 0}</span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span className="text-muted-foreground">Target Date:</span>
-                            <span className="font-medium">{chartData.length > 0 ? chartData[chartData.length - 1].date : 'N/A'}</span>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="space-y-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base">Project Health</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">Total Tasks:</span>
+                                <span className="font-medium">{chartData.length > 0 ? chartData[0].ideal : 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">Remaining:</span>
+                                <span className="font-medium">{chartData.length > 0 ? chartData[chartData.length - 1].actual : 0}</span>
+                            </div>
+                            <div className="flex justify-between items-center text-sm">
+                                <span className="text-muted-foreground">Target Date:</span>
+                                <span className="font-medium">{chartData.length > 0 ? chartData[chartData.length - 1].date : 'N/A'}</span>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* AI Risk Analysis */}
+                    <Card className={`border ${riskAnalysis ?
+                        (riskAnalysis.risk === 'HIGH' ? 'border-red-200 bg-red-50 dark:bg-red-950/10' :
+                            riskAnalysis.risk === 'MEDIUM' ? 'border-yellow-200 bg-yellow-50 dark:bg-yellow-950/10' :
+                                'border-green-200 bg-green-50 dark:bg-green-950/10') : ''
+                        }`}>
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-base flex items-center justify-between">
+                                <span>AI Risk Analysis</span>
+                                {!riskAnalysis && (
+                                    <button
+                                        onClick={handleAnalyzeRisk}
+                                        disabled={analyzingRisk}
+                                        className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 disabled:opacity-50"
+                                    >
+                                        {analyzingRisk ? 'Analyzing...' : 'Analyze Scope'}
+                                    </button>
+                                )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            {riskAnalysis ? (
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                        <span className={`text-sm font-bold px-2 py-0.5 rounded ${riskAnalysis.risk === 'HIGH' ? 'bg-red-200 text-red-800' :
+                                            riskAnalysis.risk === 'MEDIUM' ? 'bg-yellow-200 text-yellow-800' :
+                                                'bg-green-200 text-green-800'
+                                            }`}>
+                                            {riskAnalysis.risk} RISK
+                                        </span>
+                                    </div>
+                                    <p className="text-sm font-medium">{riskAnalysis.reason}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        <span className="font-semibold">Recommendation:</span> {riskAnalysis.recommendation}
+                                    </p>
+                                    <button
+                                        onClick={handleAnalyzeRisk}
+                                        className="text-xs text-indigo-600 hover:underline mt-2"
+                                    >
+                                        Re-analyze
+                                    </button>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">
+                                    Click analyze to get an AI estimation of project completion risk.
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

@@ -5,6 +5,20 @@ import { PrismaService } from '../prisma.service';
 export class ProjectsService {
     constructor(private prisma: PrismaService) { }
 
+    async updateProject(id: string, data: { name?: string; description?: string; submissionGithub?: string; submissionDemo?: string; submissionPPT?: string; submissionVideo?: string; submissionDescription?: string }) {
+        return this.prisma.project.update({
+            where: { id },
+            data,
+        });
+    }
+
+    async getProject(id: string) {
+        return this.prisma.project.findUnique({
+            where: { id },
+            include: { team: true }
+        });
+    }
+
     async createProject(teamId: string, name: string, userId: string, description?: string) {
         return this.prisma.$transaction(async (prisma) => {
             const project = await prisma.project.create({
@@ -112,13 +126,24 @@ export class ProjectsService {
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        const totalTasks = tasks.length;
+        const normalizedStartDate = new Date(currentDate);
+        const totalDuration = lastDate.getTime() - normalizedStartDate.getTime();
+
         const chartData = dates.map(date => {
             // Ideal: Linear regression from totalTasks to 0
-            const totalDuration = lastDate.getTime() - startDate.getTime();
-            const elapsed = date.getTime() - startDate.getTime();
-            // Avoid division by zero
-            const ideal = totalDuration <= 0 ? 0 : Math.max(0, totalTasks - (totalTasks * (elapsed / totalDuration)));
+            const elapsed = date.getTime() - normalizedStartDate.getTime();
+
+            let ideal: number;
+            if (totalDuration <= 0) {
+                // Single day project: Ideal is totalTasks (start) -> 0 (end of day? strictly manual)
+                // Or just flat totalTasks? 
+                // If duration is 0, we can't really draw a line. 
+                // But typically if it's 1 day, we start with Total and end with 0? 
+                // Let's just return Total tasks for the single point to show what needs to be done.
+                ideal = totalTasks;
+            } else {
+                ideal = Math.max(0, totalTasks - (totalTasks * (elapsed / totalDuration)));
+            }
 
             // Actual: Tasks remaining
             // Count tasks where (createdAt <= date) AND (completedAt is NULL OR completedAt > date)

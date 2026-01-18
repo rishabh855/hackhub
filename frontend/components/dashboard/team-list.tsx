@@ -94,17 +94,10 @@ export function TeamList() {
     if (selectedTeam) {
         return (
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <Button variant="ghost" onClick={() => setSelectedTeam(null)}>
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Teams
-                        </Button>
-                        <h2 className="text-2xl font-bold tracking-tight">{selectedTeam.name}</h2>
-                    </div>
+                <div className="flex items-center justify-end mb-4">
                     <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
                         <DialogTrigger asChild>
-                            <Button variant="outline">
+                            <Button variant="outline" size="sm">
                                 <UserPlus className="w-4 h-4 mr-2" />
                                 Invite Member
                             </Button>
@@ -132,11 +125,12 @@ export function TeamList() {
                     </Dialog>
                 </div>
                 <div className="border-t pt-6">
-                    <ProjectList teamId={selectedTeam.id} />
+                    <ProjectList teamId={selectedTeam.id} teamName={selectedTeam.name} />
                 </div>
             </div>
         );
     }
+
 
     return (
         <div className="space-y-4">

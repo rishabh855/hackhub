@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getTeamProjects, createProject } from '@/lib/api';
-import { Plus, MessageSquare, X, ArrowLeft } from 'lucide-react';
+import { Plus, MessageSquare, X, ArrowLeft, LayoutGrid } from 'lucide-react';
+import Link from 'next/link';
 import {
     Dialog,
     DialogContent,
@@ -14,20 +15,28 @@ import {
 } from "@/components/ui/dialog";
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AiProjectSummary } from '@/components/ai/ai-project-summary';
 import { SnippetList } from "@/components/snippets/snippet-list";
-import { AiTaskSuggester } from '@/components/ai/ai-task-suggester';
+
+import { SubmissionTab } from '@/components/submissions/submission-tab';
 import { ChatWindow } from '@/components/chat/chat-window';
 import { DecisionList } from '@/components/decisions/decision-list';
 import { ProgressTab } from '@/components/analytics/progress-tab';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type Project = {
     id: string;
     name: string;
     description: string | null;
     createdAt: string;
+    submissionGithub?: string;
+    submissionDemo?: string;
+    submissionPPT?: string;
+    submissionVideo?: string;
+    submissionDescription?: string;
 };
 
-export function ProjectList({ teamId }: { teamId: string }) {
+export function ProjectList({ teamId, teamName }: { teamId: string; teamName?: string }) {
     const [projects, setProjects] = useState<Project[]>([]);
     const [selectedProject, setSelectedProject] = useState<Project | null>(null);
     const [newProjectName, setNewProjectName] = useState('');
@@ -72,49 +81,122 @@ export function ProjectList({ teamId }: { teamId: string }) {
         <div className="relative min-h-[calc(100vh-100px)]">
             {selectedProject ? (
                 <div className="space-y-6">
-                    <div className="flex items-center space-x-4">
-                        <Button variant="ghost" onClick={() => setSelectedProject(null)}>
-                            <ArrowLeft className="w-4 h-4 mr-2" />
-                            Back to Projects
+                    {/* Header Region */}
+                    {/* Breadcrumb Navigation */}
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 p-0 hover:bg-transparent text-muted-foreground hover:text-foreground"
+                            onClick={() => setSelectedProject(null)}
+                        >
+                            <ArrowLeft className="w-4 h-4" />
                         </Button>
-                        <h2 className="text-2xl font-bold tracking-tight">{selectedProject.name}</h2>
+                        <span
+                            className="hover:text-foreground cursor-pointer transition-colors"
+                            onClick={() => setSelectedProject(null)}
+                        >
+                            {teamName}
+                        </span>
+                        <span className="text-muted-foreground/40">&gt;</span>
+                        <span className="font-medium text-foreground">{selectedProject.name}</span>
                     </div>
 
-                    <Tabs defaultValue="kanban" className="w-full">
+                    {/* Project Header */}
+                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-6">
+                        <div>
+                            <h2 className="text-3xl font-extrabold tracking-tight text-foreground leading-none mb-2">{selectedProject.name}</h2>
+                            <p className="text-muted-foreground text-base max-w-2xl">{selectedProject.description}</p>
+                        </div>
+                        <div className="shrink-0 pt-1">
+                            <AiProjectSummary projectId={selectedProject.id} />
+                        </div>
+                    </div>
 
-                        <TabsList>
-                            <TabsTrigger value="kanban">Tasks & Kanban</TabsTrigger>
-                            <TabsTrigger value="snippets">Code Snippets</TabsTrigger>
-                            <TabsTrigger value="chat">Chat</TabsTrigger>
-                            <TabsTrigger value="decisions">Decisions</TabsTrigger>
-                            <TabsTrigger value="progress">Progress</TabsTrigger>
-                        </TabsList>
+                    <Tabs defaultValue="kanban" className="space-y-4">
+
+                        <div className="flex items-center justify-between">
+                            <TabsList className="bg-transparent border-b rounded-none h-auto p-0 w-full justify-start gap-6">
+                                {['kanban', 'snippets', 'chat', 'decisions', 'progress', 'submission'].map((tab) => (
+                                    <TabsTrigger
+                                        key={tab}
+                                        value={tab}
+                                        className="rounded-none border-b-2 border-transparent px-0 py-2 data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none transition-all duration-200"
+                                    >
+                                        {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
+                        </div>
+
+
                         <TabsContent value="kanban" className="h-[calc(100vh-250px)]">
-                            <div className="flex justify-end mb-2">
-                                <AiTaskSuggester projectId={selectedProject.id} onTasksCreated={loadProjects} />
-                            </div>
-                            <KanbanBoard projectId={selectedProject.id} />
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="h-full"
+                            >
+
+                                <KanbanBoard projectId={selectedProject.id} />
+                            </motion.div>
                         </TabsContent>
                         <TabsContent value="snippets">
-                            <div className="max-w-4xl mx-auto py-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="max-w-4xl mx-auto py-6"
+                            >
                                 <SnippetList projectId={selectedProject.id} />
-                            </div>
+                            </motion.div>
                         </TabsContent>
                         <TabsContent value="chat" className="h-[calc(100vh-250px)]">
-                            <div className="max-w-4xl mx-auto py-6 h-full">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="max-w-4xl mx-auto py-6 h-full"
+                            >
                                 <ChatWindow teamId={teamId} projectId={selectedProject.id} />
-                            </div>
+                            </motion.div>
                         </TabsContent>
                         <TabsContent value="decisions">
-                            <div className="max-w-4xl mx-auto py-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="max-w-4xl mx-auto py-6"
+                            >
                                 <DecisionList projectId={selectedProject.id} role={(session?.user as any)?.role || 'VIEWER'} />
-                            </div>
+                            </motion.div>
                         </TabsContent>
                         <TabsContent value="progress">
-                            <div className="max-w-4xl mx-auto py-6">
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.2 }}
+                                className="max-w-4xl mx-auto py-6"
+                            >
                                 <ProgressTab projectId={selectedProject.id} />
-                            </div>
+                            </motion.div>
                         </TabsContent>
+                        <TabsContent value="submission">
+                            <motion.div
+                                initial={{ opacity: 0, y: 0 }} // Less movement for checklist
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="max-w-4xl mx-auto py-6"
+                            >
+                                <SubmissionTab projectId={selectedProject.id} role={(session?.user as any)?.role || 'VIEWER'} />
+                            </motion.div>
+                        </TabsContent>
+
                     </Tabs>
                 </div>
             ) : (
@@ -196,9 +278,9 @@ export function ProjectList({ teamId }: { teamId: string }) {
                 ) : (
                     <Button
                         onClick={() => setIsChatOpen(true)}
-                        className="rounded-full h-14 w-14 shadow-lg"
+                        className="rounded-full h-12 w-12 shadow-md hover:shadow-xl transition-all duration-300 hover:scale-105 bg-primary text-primary-foreground"
                     >
-                        <MessageSquare className="h-6 w-6" />
+                        <MessageSquare className="h-5 w-5" />
                     </Button>
                 )}
             </div>

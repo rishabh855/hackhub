@@ -36,6 +36,29 @@ export async function getTeamProjects(teamId: string) {
     return res.json();
 }
 
+export async function getProject(projectId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}`);
+    if (!res.ok) throw new Error('Failed to fetch project');
+    return res.json();
+}
+
+export async function updateProject(projectId: string, data: any, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId
+        },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) {
+        const text = await res.text();
+        console.error('Failed to update project:', res.status, text);
+        throw new Error(`Failed to update project: ${res.status} ${text}`);
+    }
+    return res.json();
+}
+
 export async function inviteMember(teamId: string, email: string) {
     const res = await fetch(`${BACKEND_URL}/teams/${teamId}/members`, {
         method: 'POST',
@@ -199,6 +222,24 @@ export async function generateAiTasks(description: string) {
     return res.json();
 }
 
+export async function summarizeProject(projectId: string) {
+    const res = await fetch(`${BACKEND_URL}/ai/summarize-project`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+    });
+    return res.json();
+}
+
+export async function analyzeScope(projectId: string) {
+    const res = await fetch(`${BACKEND_URL}/ai/analyze-scope`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectId }),
+    });
+    return res.json();
+}
+
 export async function explainSnippet(code: string, language: string) {
     const res = await fetch(`${BACKEND_URL}/ai/explain-snippet`, {
         method: 'POST',
@@ -219,7 +260,11 @@ export async function createDecision(projectId: string, data: { title: string; c
         },
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Failed to create decision');
+    if (!res.ok) {
+        const text = await res.text();
+        console.error('Failed to create decision:', res.status, text);
+        throw new Error(`Failed to create decision: ${res.status} ${text}`);
+    }
     return res.json();
 }
 
@@ -235,8 +280,8 @@ export async function getProjectDecisionsWithUser(projectId: string, userId: str
     return res.json();
 }
 
-export async function addDecisionNote(decisionId: string, content: string, userId: string) {
-    const res = await fetch(`${BACKEND_URL}/decisions/${decisionId}/notes`, {
+export async function addDecisionNote(decisionId: string, content: string, userId: string, projectId: string) {
+    const res = await fetch(`${BACKEND_URL}/decisions/${decisionId}/notes?projectId=${projectId}`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -244,7 +289,11 @@ export async function addDecisionNote(decisionId: string, content: string, userI
         },
         body: JSON.stringify({ content }),
     });
-    if (!res.ok) throw new Error('Failed to add note');
+    if (!res.ok) {
+        const text = await res.text();
+        console.error('Failed to add note:', res.status, text);
+        throw new Error(`Failed to add note: ${res.status} ${text}`);
+    }
     return res.json();
 }
 

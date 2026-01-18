@@ -118,6 +118,12 @@ model Project {
   members     ProjectMember[]
   messages    Message[]
   decisions   Decision[]
+
+  submissionGithub      String?
+  submissionDemo        String?
+  submissionPPT         String?
+  submissionVideo       String?
+  submissionDescription String? @db.Text
 }
 
 model ProjectMember {

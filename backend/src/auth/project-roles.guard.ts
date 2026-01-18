@@ -22,7 +22,7 @@ export class ProjectRolesGuard implements CanActivate {
 
         // Extract userId and projectId from various sources
         const userId = request.headers['x-user-id'] || request.body?.userId || request.query?.userId;
-        let projectId = request.headers['x-project-id'] || request.body?.projectId || request.query?.projectId || request.params?.projectId;
+        let projectId = request.headers['x-project-id'] || request.body?.projectId || request.query?.projectId || request.params?.projectId || request.params?.id;
 
         if (!userId) {
             throw new ForbiddenException('User ID required for RBAC check');

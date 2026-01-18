@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, MessageSquare, MoreVertical, Pin, Bot } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { askAI, getProjectMembership } from '@/lib/api';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -196,69 +197,75 @@ export function ChatWindow({ teamId, projectId }: Props) {
             <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
                 <ScrollArea className="flex-1 p-4">
                     <div className="space-y-4">
-                        {messages.map((msg, index) => {
-                            const isMe = msg.senderId === (session?.user as any)?.id;
-                            return (
-                                <div
-                                    key={index}
-                                    className={`group flex ${isMe ? 'justify-end' : 'justify-start'} items-start gap-2`}
-                                >
-                                    {!isMe && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="start">
-                                                <DropdownMenuItem onClick={() => handlePinMessage(msg.id, !msg.isPinned)}>
-                                                    {msg.isPinned ? 'Unpin' : 'Pin'} Message
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleCreateTaskFromMessage(msg.content)}>
-                                                    Convert to Task
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-
-                                    <div
-                                        className={`max-w-[70%] rounded-lg p-3 relative ${isMe
-                                            ? 'bg-primary text-primary-foreground'
-                                            : 'bg-muted'
-                                            }`}
+                        <AnimatePresence initial={false}>
+                            {messages.map((msg, index) => {
+                                const isMe = msg.senderId === (session?.user as any)?.id;
+                                return (
+                                    <motion.div
+                                        key={msg.id || index}
+                                        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        layout
+                                        transition={{ type: "spring", bounce: 0.4, duration: 0.4 }}
+                                        className={`group flex ${isMe ? 'justify-end' : 'justify-start'} items-start gap-2`}
                                     >
-                                        {msg.isPinned && <Pin className="w-3 h-3 absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 rounded-full p-0.5" />}
                                         {!isMe && (
-                                            <p className="text-xs font-semibold mb-1 text-muted-foreground">
-                                                {msg.sender.name}
-                                            </p>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="start">
+                                                    <DropdownMenuItem onClick={() => handlePinMessage(msg.id, !msg.isPinned)}>
+                                                        {msg.isPinned ? 'Unpin' : 'Pin'} Message
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleCreateTaskFromMessage(msg.content)}>
+                                                        Convert to Task
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         )}
-                                        <p className="text-sm">{msg.content}</p>
-                                        <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
-                                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
-                                    </div>
 
-                                    {isMe && (
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <MoreVertical className="w-4 h-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handlePinMessage(msg.id, !msg.isPinned)}>
-                                                    {msg.isPinned ? 'Unpin' : 'Pin'} Message
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleCreateTaskFromMessage(msg.content)}>
-                                                    Convert to Task
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    )}
-                                </div>
-                            );
-                        })}
+                                        <div
+                                            className={`max-w-[70%] rounded-lg p-3 relative shadow-sm ${isMe
+                                                ? 'bg-primary text-primary-foreground'
+                                                : 'bg-muted'
+                                                }`}
+                                        >
+                                            {msg.isPinned && <Pin className="w-3 h-3 absolute -top-1 -right-1 bg-yellow-400 text-yellow-900 rounded-full p-0.5" />}
+                                            {!isMe && (
+                                                <p className="text-xs font-semibold mb-1 text-muted-foreground">
+                                                    {msg.sender.name}
+                                                </p>
+                                            )}
+                                            <p className="text-sm">{msg.content}</p>
+                                            <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-primary-foreground/70' : 'text-muted-foreground'}`}>
+                                                {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </p>
+                                        </div>
+
+                                        {isMe && (
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <MoreVertical className="w-4 h-4" />
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent align="end">
+                                                    <DropdownMenuItem onClick={() => handlePinMessage(msg.id, !msg.isPinned)}>
+                                                        {msg.isPinned ? 'Unpin' : 'Pin'} Message
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => handleCreateTaskFromMessage(msg.content)}>
+                                                        Convert to Task
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        )}
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
                         <div ref={scrollRef} />
                         {isAiLoading && (
                             <div className="flex justify-start items-center gap-2 text-muted-foreground text-sm italic">

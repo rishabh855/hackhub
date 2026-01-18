@@ -37,6 +37,7 @@ import { TeamMembersDialog } from "../dashboard/team-members-dialog";
 import { CreateTaskDialog } from "../dashboard/create-task-dialog";
 import { getProjectMembers, getProjectTasks, updateTask, deleteTask, getProjectMembership } from '@/lib/api';
 import { useSession } from "next-auth/react";
+import { AiTaskSuggester } from '@/components/ai/ai-task-suggester';
 
 interface Task {
     id: string;
@@ -188,48 +189,50 @@ export function KanbanBoard({ projectId }: Props) {
 
     if (!isMounted) return null;
 
+
+
     return (
         <div className="h-full flex flex-col">
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-center gap-4">
-                    <h2 className="text-xl font-semibold">Board</h2>
-                    {/* Filter Bar */}
-                    <div className="flex items-center gap-2">
-                        <Input
-                            placeholder="Search tasks..."
-                            className="w-[200px] h-9"
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                        />
-                        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                            <SelectTrigger className="w-[130px] h-9">
-                                <SelectValue placeholder="Priority" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">All Priorities</SelectItem>
-                                <SelectItem value="HIGH">High</SelectItem>
-                                <SelectItem value="MEDIUM">Medium</SelectItem>
-                                <SelectItem value="LOW">Low</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                {/* Filter Bar (Left) */}
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <Input
+                        placeholder="Search tasks..."
+                        className="w-full md:w-[240px] h-9 bg-white dark:bg-gray-900"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                        <SelectTrigger className="w-[130px] h-9 bg-white dark:bg-gray-900">
+                            <SelectValue placeholder="Priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="ALL">All Priorities</SelectItem>
+                            <SelectItem value="HIGH">High</SelectItem>
+                            <SelectItem value="MEDIUM">Medium</SelectItem>
+                            <SelectItem value="LOW">Low</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
 
-                {/* New Task Dialog */}
-                <div className="flex gap-2">
-                    <TeamMembersDialog projectId={projectId} />
+                {/* Actions (Right) */}
+                <div className="flex items-center gap-2 self-end md:self-auto">
                     {role !== 'VIEWER' && (
-                        <CreateTaskDialog
-                            projectId={projectId}
-                            trigger={
-                                <Button>
-                                    <Plus className="w-4 h-4 mr-2" />
-                                    New Task
-                                </Button>
-                            }
-                            onTaskCreated={loadTasks}
-                        />
+                        <>
+                            <CreateTaskDialog
+                                projectId={projectId}
+                                trigger={
+                                    <Button size="sm" className="shadow-sm">
+                                        <Plus className="w-4 h-4 mr-2" />
+                                        New Task
+                                    </Button>
+                                }
+                                onTaskCreated={loadTasks}
+                            />
+                            <AiTaskSuggester projectId={projectId} onTasksCreated={loadTasks} />
+                        </>
                     )}
+                    <TeamMembersDialog projectId={projectId} />
                 </div>
             </div>
 

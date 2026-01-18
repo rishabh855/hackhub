@@ -20,38 +20,23 @@ import {
 } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, ChevronDown, ChevronUp, Lock } from 'lucide-react';
-import { createDecision, getProjectDecisionsWithUser, addDecisionNote } from '@/lib/api';
+import { createDecision, getProjectDecisionsWithUser, addDecisionNote, getProjectMembership } from '@/lib/api';
 import { format } from 'date-fns';
-
-interface DecisionNote {
-    id: string;
-    content: string;
-    userId: string;
-    user: { name: string; image?: string };
-    createdAt: string;
-}
-
-interface Decision {
-    id: string;
-    title: string;
-    content: string;
-    status: string;
-    createdAt: string;
-    userId: string;
-    user: { name: string; image?: string };
-    notes: DecisionNote[];
-}
+// ... (imports)
 
 interface Props {
     projectId: string;
-    role: string;
+    role?: string; // Optional
 }
 
-export function DecisionList({ projectId, role }: Props) {
+export function DecisionList({ projectId, role: initialRole }: Props) {
     const { data: session } = useSession();
     const [decisions, setDecisions] = useState<Decision[]>([]);
     const [loading, setLoading] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    // Role State
+    const [role, setRole] = useState(initialRole || 'VIEWER');
 
     // Create Form
     const [newTitle, setNewTitle] = useState('');
@@ -62,6 +47,15 @@ export function DecisionList({ projectId, role }: Props) {
     const [noteContent, setNoteContent] = useState('');
 
     const isViewer = role === 'VIEWER';
+
+    useEffect(() => {
+        if (session?.user && projectId) {
+            // @ts-ignore
+            getProjectMembership(projectId, session.user.id).then(m => {
+                if (m) setRole(m.role);
+            });
+        }
+    }, [session, projectId]);
 
     useEffect(() => {
         loadDecisions();
@@ -96,7 +90,7 @@ export function DecisionList({ projectId, role }: Props) {
     async function handleAddNote(decisionId: string) {
         if (!noteContent.trim() || isViewer) return;
         try {
-            await addDecisionNote(decisionId, noteContent, (session?.user as any).id);
+            await addDecisionNote(decisionId, noteContent, (session?.user as any).id, projectId);
             setNoteContent('');
             loadDecisions(); // Refresh to show new note
         } catch (error) {

@@ -12,7 +12,7 @@ export default function DashboardLayout({
         <div className="flex min-h-screen flex-col">
             <header className="border-b">
                 <div className="flex h-16 items-center px-4 md:px-6">
-                    <Link href="/dashboard" className="flex items-center gap-2 font-bold text-lg">
+                    <Link href="/dashboard" className="flex items-center gap-2 font-extrabold text-2xl tracking-tight text-primary">
                         HackHub
                     </Link>
                     <div className="ml-auto flex items-center space-x-4">
