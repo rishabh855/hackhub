@@ -24,4 +24,11 @@ export class ChatService {
             take: 50,
         });
     }
+    async pinMessage(messageId: string, isPinned: boolean) {
+        return this.prisma.message.update({
+            where: { id: messageId },
+            data: { isPinned },
+            include: { sender: true },
+        });
+    }
 }

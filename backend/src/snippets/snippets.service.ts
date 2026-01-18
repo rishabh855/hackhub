@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma.service';
 export class SnippetsService {
     constructor(private prisma: PrismaService) { }
 
-    async createSnippet(userId: string, projectId: string, data: { title: string; code: string; language: string; description?: string }) {
+    async createSnippet(userId: string, projectId: string, data: { title: string; code: string; language: string; category?: string; description?: string }) {
         return this.prisma.snippet.create({
             data: {
                 ...data,
@@ -30,7 +30,7 @@ export class SnippetsService {
         });
     }
 
-    async updateSnippet(id: string, data: { title?: string; code?: string; language?: string; description?: string }) {
+    async updateSnippet(id: string, data: { title?: string; code?: string; language?: string; category?: string; description?: string }) {
         return this.prisma.snippet.update({
             where: { id },
             data,

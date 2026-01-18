@@ -6,7 +6,7 @@ export class TasksController {
     constructor(private readonly tasksService: TasksService) { }
 
     @Post()
-    create(@Body() body: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string }) {
+    create(@Body() body: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[] }) {
         return this.tasksService.createTask(body);
     }
 

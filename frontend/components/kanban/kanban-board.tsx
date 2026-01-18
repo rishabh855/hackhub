@@ -33,7 +33,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { createTask, getProjectTasks, updateTask, deleteTask } from '@/lib/api';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { TaskDetailView } from "./task-detail-view";
+import { TeamMembersDialog } from "../dashboard/team-members-dialog";
+import { CreateTaskDialog } from "../dashboard/create-task-dialog";
+import { getProjectMembers, getProjectTasks, updateTask, deleteTask } from '@/lib/api';
 
 interface Task {
     id: string;
@@ -60,10 +64,9 @@ export function KanbanBoard({ projectId }: Props) {
     const [loading, setLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
 
-    // New Task State
-    const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-    const [newTaskTitle, setNewTaskTitle] = useState('');
-    const [newTaskPriority, setNewTaskPriority] = useState('MEDIUM');
+    // Sheet State (for Task Details)
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [selectedSheetTask, setSelectedSheetTask] = useState<Task | null>(null);
 
     useEffect(() => {
         setIsMounted(true);
@@ -78,8 +81,6 @@ export function KanbanBoard({ projectId }: Props) {
             console.error(err);
         }
     }
-
-    // ... (sensors and handlers)
 
     const sensors = useSensors(
         useSensor(PointerSensor),
@@ -134,26 +135,6 @@ export function KanbanBoard({ projectId }: Props) {
         setActiveId(null);
     }
 
-    async function handleCreateTask() {
-        if (!newTaskTitle) return;
-        setLoading(true);
-        try {
-            await createTask({
-                title: newTaskTitle,
-                projectId,
-                priority: newTaskPriority,
-            });
-            setIsNewTaskOpen(false);
-            setNewTaskTitle('');
-            setNewTaskPriority('MEDIUM');
-            loadTasks();
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    }
-
     async function handleDeleteTask(id: string) {
         console.log('Deleting task:', id);
         try {
@@ -166,52 +147,65 @@ export function KanbanBoard({ projectId }: Props) {
         }
     }
 
+    // Filter State
+    const [searchQuery, setSearchQuery] = useState('');
+    const [priorityFilter, setPriorityFilter] = useState('ALL');
+
+    // Filter Logic
+    const filteredTasks = tasks.filter(task => {
+        const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesPriority = priorityFilter === 'ALL' || task.priority === priorityFilter;
+        return matchesSearch && matchesPriority;
+    });
+
+    function onTaskClick(task: Task) {
+        setSelectedSheetTask(task);
+        setIsSheetOpen(true);
+    }
+
     if (!isMounted) return null;
 
     return (
         <div className="h-full flex flex-col">
             <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-semibold">Board</h2>
-                <Dialog open={isNewTaskOpen} onOpenChange={setIsNewTaskOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="w-4 h-4 mr-2" />
-                            New Task
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Create New Task</DialogTitle>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                            <div className="grid gap-2">
-                                <Label htmlFor="title">Task Title</Label>
-                                <Input
-                                    id="title"
-                                    value={newTaskTitle}
-                                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                                    placeholder="e.g. Design Homepage"
-                                />
-                            </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="priority">Priority</Label>
-                                <Select value={newTaskPriority} onValueChange={setNewTaskPriority}>
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="LOW">Low</SelectItem>
-                                        <SelectItem value="MEDIUM">Medium</SelectItem>
-                                        <SelectItem value="HIGH">High</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <Button onClick={handleCreateTask} disabled={loading}>
-                                {loading ? 'Creating...' : 'Create Task'}
+                <div className="flex items-center gap-4">
+                    <h2 className="text-xl font-semibold">Board</h2>
+                    {/* Filter Bar */}
+                    <div className="flex items-center gap-2">
+                        <Input
+                            placeholder="Search tasks..."
+                            className="w-[200px] h-9"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                            <SelectTrigger className="w-[130px] h-9">
+                                <SelectValue placeholder="Priority" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All Priorities</SelectItem>
+                                <SelectItem value="HIGH">High</SelectItem>
+                                <SelectItem value="MEDIUM">Medium</SelectItem>
+                                <SelectItem value="LOW">Low</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+                {/* New Task Dialog */}
+                <div className="flex gap-2">
+                    <TeamMembersDialog projectId={projectId} />
+                    <CreateTaskDialog
+                        projectId={projectId}
+                        trigger={
+                            <Button>
+                                <Plus className="w-4 h-4 mr-2" />
+                                New Task
                             </Button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
+                        }
+                        onTaskCreated={loadTasks}
+                    />
+                </div>
             </div>
 
             <DndContext
@@ -226,8 +220,9 @@ export function KanbanBoard({ projectId }: Props) {
                             key={col.id}
                             id={col.id}
                             title={col.title}
-                            tasks={tasks.filter((t) => t.status === col.id)}
+                            tasks={filteredTasks.filter((t) => t.status === col.id)}
                             deleteTask={handleDeleteTask}
+                            onTaskClick={onTaskClick}
                         />
                     ))}
                 </div>
@@ -237,6 +232,25 @@ export function KanbanBoard({ projectId }: Props) {
                     ) : null}
                 </DragOverlay>
             </DndContext>
+
+            <Sheet open={isSheetOpen} onOpenChange={(open) => {
+                setIsSheetOpen(open);
+                if (!open) loadTasks(); // Refresh when closing to show updates
+            }}>
+                <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto">
+                    <SheetHeader>
+                        <SheetTitle>Task Details</SheetTitle>
+                    </SheetHeader>
+                    {selectedSheetTask && (
+                        <TaskDetailView
+                            task={selectedSheetTask}
+                            onUpdate={() => {
+                                loadTasks(); // Refresh list to get latest data
+                            }}
+                        />
+                    )}
+                </SheetContent>
+            </Sheet>
         </div>
     );
 }

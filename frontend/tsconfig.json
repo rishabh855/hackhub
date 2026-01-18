@@ -27,7 +27,7 @@
         "./*"
       ],
       "@db": [
-        "./lib/prisma-client/index.js"
+        "./lib/prisma-client"
       ]
     }
   },

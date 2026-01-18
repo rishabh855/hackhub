@@ -37,9 +37,9 @@ export function TeamList() {
 
     useEffect(() => {
         setIsMounted(true);
-        if (session?.user?.id) {
+        if (session?.user && (session.user as any).id) {
             // @ts-ignore
-            loadTeams(session.user.id);
+            loadTeams((session.user as any).id);
         }
     }, [session]);
 
@@ -56,11 +56,11 @@ export function TeamList() {
 
     async function handleCreateTeam() {
         // @ts-ignore
-        if (!newTeamName || !session?.user?.id) return;
+        if (!newTeamName || !session?.user) return;
         setLoading(true);
         try {
             // @ts-ignore
-            await createTeam(session.user.id, newTeamName);
+            await createTeam((session.user as any).id, newTeamName);
             setIsOpen(false);
             setNewTeamName('');
             // @ts-ignore

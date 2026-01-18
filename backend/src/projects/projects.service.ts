@@ -5,13 +5,25 @@ import { PrismaService } from '../prisma.service';
 export class ProjectsService {
     constructor(private prisma: PrismaService) { }
 
-    async createProject(teamId: string, name: string, description?: string) {
-        return this.prisma.project.create({
-            data: {
-                name,
-                description,
-                teamId,
-            },
+    async createProject(teamId: string, name: string, userId: string, description?: string) {
+        return this.prisma.$transaction(async (prisma) => {
+            const project = await prisma.project.create({
+                data: {
+                    name,
+                    description,
+                    teamId,
+                },
+            });
+
+            await prisma.projectMember.create({
+                data: {
+                    userId,
+                    projectId: project.id,
+                    role: 'OWNER',
+                },
+            });
+
+            return project;
         });
     }
 

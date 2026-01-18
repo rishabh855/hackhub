@@ -6,7 +6,11 @@ export async function createTeam(userId: string, name: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, name }),
     });
-    if (!res.ok) throw new Error('Failed to create team');
+    if (!res.ok) {
+        const text = await res.text();
+        console.error('Failed to create team:', res.status, text);
+        throw new Error(`Failed to create team: ${res.status} ${text}`);
+    }
     return res.json();
 }
 
@@ -16,11 +20,11 @@ export async function getUserTeams(userId: string) {
     return res.json();
 }
 
-export async function createProject(teamId: string, name: string, description: string = '') {
+export async function createProject(teamId: string, name: string, userId: string, description: string = '') {
     const res = await fetch(`${BACKEND_URL}/projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ teamId, name, description }),
+        body: JSON.stringify({ teamId, name, userId, description }),
     });
     if (!res.ok) throw new Error('Failed to create project');
     return res.json();
@@ -47,7 +51,7 @@ export async function inviteMember(teamId: string, email: string) {
 
 // Tasks API
 
-export async function createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string }) {
+export async function createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[] }) {
     const res = await fetch(`${BACKEND_URL}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -63,7 +67,7 @@ export async function getProjectTasks(projectId: string) {
     return res.json();
 }
 
-export async function updateTask(id: string, data: { status?: string; priority?: string; assigneeId?: string; title?: string; description?: string }) {
+export async function updateTask(id: string, data: { status?: string; priority?: string; assigneeId?: string; title?: string; description?: string; dueDate?: Date | null; labels?: string[] }) {
     const res = await fetch(`${BACKEND_URL}/tasks/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -81,9 +85,45 @@ export async function deleteTask(id: string) {
     return res.json();
 }
 
+// Members API
+
+export async function getProjectMembers(projectId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members`);
+    if (!res.ok) throw new Error('Failed to fetch members');
+    return res.json();
+}
+
+export async function inviteProjectMember(projectId: string, email: string, role: string = 'VIEWER') {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, role }),
+    });
+    if (!res.ok) throw new Error('Failed to invite member');
+    return res.json();
+}
+
+export async function updateMemberRole(projectId: string, userId: string, role: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error('Failed to update role');
+    return res.json();
+}
+
+export async function removeMember(projectId: string, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members/${userId}`, {
+        method: 'DELETE',
+    });
+    if (!res.ok) throw new Error('Failed to remove member');
+    return res.json();
+}
+
 // Snippets API
 
-export async function createSnippet(data: { userId: string; projectId: string; title: string; code: string; language: string; description?: string }) {
+export async function createSnippet(data: { userId: string; projectId: string; title: string; code: string; language: string; category?: string; description?: string }) {
     const res = await fetch(`${BACKEND_URL}/snippets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

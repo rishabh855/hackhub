@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSession } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,11 +50,14 @@ export function ProjectList({ teamId }: { teamId: string }) {
         }
     }
 
+    const { data: session } = useSession();
+
     async function handleCreateProject() {
-        if (!newProjectName.trim()) return;
+        if (!newProjectName.trim() || !session?.user) return;
         setLoading(true);
         try {
-            await createProject(teamId, newProjectName);
+            // @ts-ignore
+            await createProject(teamId, newProjectName, (session.user as any).id);
             setIsOpen(false);
             setNewProjectName('');
             loadProjects();

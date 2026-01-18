@@ -20,14 +20,17 @@ interface SnippetExplainerProps {
 export function SnippetExplainer({ code, language }: SnippetExplainerProps) {
     const [explanation, setExplanation] = useState('');
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(false);
 
     const handleExplain = async () => {
         setLoading(true);
+        setError(false);
         try {
             const data = await explainSnippet(code, language);
             setExplanation(data.explanation);
         } catch (err) {
             console.error(err);
+            setError(true);
             setExplanation("Failed to get explanation from AI.");
         } finally {
             setLoading(false);
@@ -47,8 +50,15 @@ export function SnippetExplainer({ code, language }: SnippetExplainerProps) {
                 </DialogHeader>
                 <div className="py-4 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {loading ? (
-                        <div className="flex items-center gap-2">
-                            <Bot className="animate-bounce w-4 h-4" /> Analyzing code...
+                        <div className="space-y-2 animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-5/6"></div>
+                        </div>
+                    ) : error ? (
+                        <div className="text-red-500 flex flex-col items-start gap-2">
+                            <p>{explanation}</p>
+                            <Button variant="outline" size="sm" onClick={handleExplain}>Retry</Button>
                         </div>
                     ) : (
                         explanation

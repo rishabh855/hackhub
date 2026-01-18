@@ -16,9 +16,10 @@ interface Task {
 interface Props {
     task: Task;
     deleteTask: (id: string) => void;
+    onClick?: () => void;
 }
 
-export function TaskCard({ task, deleteTask }: Props) {
+export function TaskCard({ task, deleteTask, onClick }: Props) {
     const {
         attributes,
         listeners,
@@ -39,7 +40,14 @@ export function TaskCard({ task, deleteTask }: Props) {
     }[task.priority] || 'bg-gray-100 text-gray-800';
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
+        <div
+            ref={setNodeRef}
+            style={style}
+            {...attributes}
+            {...listeners}
+            className="touch-none"
+            onClick={onClick}
+        >
             <Card className="mb-3 cursor-grab hover:shadow-md transition-shadow">
                 <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-sm font-medium leading-none">

@@ -23,6 +23,7 @@ interface SnippetDialogProps {
 }
 
 const LANGUAGES = ['JavaScript', 'TypeScript', 'Python', 'Java', 'HTML', 'CSS', 'SQL', 'JSON', 'Bash'];
+const CATEGORIES = ['COMPONENT', 'HOOK', 'UTILITY', 'CONFIG', 'DATABASE', 'API', 'OTHER'];
 
 export function SnippetDialog({ projectId, userId, onSnippetCreated }: SnippetDialogProps) {
     const [open, setOpen] = useState(false);
@@ -31,6 +32,7 @@ export function SnippetDialog({ projectId, userId, onSnippetCreated }: SnippetDi
         title: '',
         description: '',
         language: 'javascript',
+        category: 'OTHER',
         code: ''
     });
 
@@ -44,10 +46,11 @@ export function SnippetDialog({ projectId, userId, onSnippetCreated }: SnippetDi
                 title: formData.title,
                 description: formData.description,
                 language: formData.language,
+                category: formData.category,
                 code: formData.code
             });
             setOpen(false);
-            setFormData({ title: '', description: '', language: 'javascript', code: '' });
+            setFormData({ title: '', description: '', language: 'javascript', category: 'OTHER', code: '' });
             onSnippetCreated();
         } catch (error) {
             console.error(error);
@@ -76,21 +79,39 @@ export function SnippetDialog({ projectId, userId, onSnippetCreated }: SnippetDi
                             placeholder="e.g. Auth Middleware Helper"
                         />
                     </div>
-                    <div className="grid gap-2">
-                        <Label>Language</Label>
-                        <Select
-                            value={formData.language}
-                            onValueChange={(val) => setFormData({ ...formData, language: val })}
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {LANGUAGES.map(lang => (
-                                    <SelectItem key={lang} value={lang.toLowerCase()}>{lang}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="grid gap-2">
+                            <Label>Language</Label>
+                            <Select
+                                value={formData.language}
+                                onValueChange={(val) => setFormData({ ...formData, language: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {LANGUAGES.map(lang => (
+                                        <SelectItem key={lang} value={lang.toLowerCase()}>{lang}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid gap-2">
+                            <Label>Category</Label>
+                            <Select
+                                value={formData.category}
+                                onValueChange={(val) => setFormData({ ...formData, category: val })}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {CATEGORIES.map(cat => (
+                                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
                     </div>
                     <div className="grid gap-2">
                         <Label>Description (Optional)</Label>

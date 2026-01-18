@@ -43,4 +43,13 @@ export class ChatGateway {
     async handleGetHistory(@MessageBody() teamId: string) {
         return this.chatService.getRecentMessages(teamId);
     }
+    @SubscribeMessage('pinMessage')
+    async handlePinMessage(
+        @MessageBody() payload: { teamId: string; messageId: string; isPinned: boolean },
+    ) {
+        const message = await this.chatService.pinMessage(payload.messageId, payload.isPinned);
+        // Broadcast to all (including sender) so UI updates
+        this.server.to(payload.teamId).emit('messagePinned', message);
+        return message;
+    }
 }
