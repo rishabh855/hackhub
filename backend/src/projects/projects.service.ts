@@ -118,6 +118,8 @@ export class ProjectsService {
         const dates: Date[] = [];
         let currentDate = new Date(startDate);
         currentDate.setHours(0, 0, 0, 0);
+        const normalizedStartDate = new Date(currentDate); // Capture start date correctly
+
         const lastDate = new Date(endDate);
         lastDate.setHours(0, 0, 0, 0);
 
@@ -126,7 +128,7 @@ export class ProjectsService {
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
-        const normalizedStartDate = new Date(currentDate);
+        const totalTasks = tasks.length;
         const totalDuration = lastDate.getTime() - normalizedStartDate.getTime();
 
         const chartData = dates.map(date => {
