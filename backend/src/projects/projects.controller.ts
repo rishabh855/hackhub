@@ -1,5 +1,8 @@
-import { Controller, Post, Body, Get, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, Param, Patch, Delete, UseGuards } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
+import { ProjectRoles } from '../auth/project-roles.decorator';
+import { ProjectRolesGuard } from '../auth/project-roles.guard';
+import { ProjectRole } from './project-role.enum';
 
 @Controller('projects')
 export class ProjectsController {
@@ -7,16 +10,46 @@ export class ProjectsController {
 
     @Post()
     create(@Body() body: { teamId: string; name: string; description?: string; userId: string }) {
-        // In a real app we'd get userId from Request object (JWT), but adhering to current API pattern 
-        // or we updates frontend to pass it. 
-        // Better: user ID should come from `@Req` user if available.
-        // For MVP speed: assuming the body has it or we will pass it from frontend.
-        // Actually, let's strictly require it.
         return this.projectsService.createProject(body.teamId, body.name, body.userId, body.description);
     }
 
     @Get()
     findAll(@Query('teamId') teamId: string) {
         return this.projectsService.getTeamProjects(teamId);
+    }
+    @Get(':id/membership')
+    getMembership(@Param('id') projectId: string, @Query('userId') userId: string) {
+        return this.projectsService.getMembership(projectId, userId);
+    }
+
+    @Get(':id/members')
+    getMembers(@Param('id') projectId: string) {
+        return this.projectsService.getProjectMembers(projectId);
+    }
+
+    @Post(':id/members')
+    @ProjectRoles(ProjectRole.OWNER)
+    @UseGuards(ProjectRolesGuard)
+    addMember(@Param('id') projectId: string, @Body() body: { email: string, role: string }) {
+        return this.projectsService.addMember(projectId, body.email, body.role);
+    }
+
+    @Patch(':id/members/:userId')
+    @ProjectRoles(ProjectRole.OWNER)
+    @UseGuards(ProjectRolesGuard)
+    updateMember(@Param('id') projectId: string, @Param('userId') userId: string, @Body() body: { role: string }) {
+        return this.projectsService.updateMemberRole(projectId, userId, body.role);
+    }
+
+    @Delete(':id/members/:userId')
+    @ProjectRoles(ProjectRole.OWNER)
+    @UseGuards(ProjectRolesGuard)
+    removeMember(@Param('id') projectId: string, @Param('userId') userId: string) {
+        return this.projectsService.removeMember(projectId, userId);
+    }
+
+    @Get(':id/analytics/burndown')
+    getBurndown(@Param('id') projectId: string) {
+        return this.projectsService.getBurndown(projectId);
     }
 }

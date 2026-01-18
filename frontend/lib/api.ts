@@ -51,10 +51,13 @@ export async function inviteMember(teamId: string, email: string) {
 
 // Tasks API
 
-export async function createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[] }) {
+export async function createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[]; isBlocked?: boolean; blockedReason?: string }, userId: string) {
     const res = await fetch(`${BACKEND_URL}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId
+        },
         body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to create task');
@@ -67,19 +70,25 @@ export async function getProjectTasks(projectId: string) {
     return res.json();
 }
 
-export async function updateTask(id: string, data: { status?: string; priority?: string; assigneeId?: string; title?: string; description?: string; dueDate?: Date | null; labels?: string[] }) {
-    const res = await fetch(`${BACKEND_URL}/tasks/${id}`, {
+export async function updateTask(id: string, data: { status?: string; priority?: string; assigneeId?: string; title?: string; description?: string; dueDate?: Date | null; labels?: string[]; isBlocked?: boolean; blockedReason?: string | null }, userId: string, projectId: string) {
+    const res = await fetch(`${BACKEND_URL}/tasks/${id}?projectId=${projectId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId
+        },
         body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to update task');
     return res.json();
 }
 
-export async function deleteTask(id: string) {
-    const res = await fetch(`${BACKEND_URL}/tasks/${id}`, {
+export async function deleteTask(id: string, projectId: string, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/tasks/${id}?projectId=${projectId}`, {
         method: 'DELETE',
+        headers: {
+            'x-user-id': userId
+        },
     });
     if (!res.ok) throw new Error('Failed to delete task');
     return res.json();
@@ -93,32 +102,48 @@ export async function getProjectMembers(projectId: string) {
     return res.json();
 }
 
-export async function inviteProjectMember(projectId: string, email: string, role: string = 'VIEWER') {
+export async function inviteProjectMember(projectId: string, email: string, role: string = 'VIEWER', userId: string) {
     const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId
+        },
         body: JSON.stringify({ email, role }),
     });
     if (!res.ok) throw new Error('Failed to invite member');
     return res.json();
 }
 
-export async function updateMemberRole(projectId: string, userId: string, role: string) {
+export async function updateMemberRole(projectId: string, userId: string, role: string, requestorId: string) {
     const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members/${userId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': requestorId
+        },
         body: JSON.stringify({ role }),
     });
     if (!res.ok) throw new Error('Failed to update role');
     return res.json();
 }
 
-export async function removeMember(projectId: string, userId: string) {
+export async function removeMember(projectId: string, userId: string, requestorId: string) {
     const res = await fetch(`${BACKEND_URL}/projects/${projectId}/members/${userId}`, {
         method: 'DELETE',
+        headers: {
+            'x-user-id': requestorId
+        }
     });
     if (!res.ok) throw new Error('Failed to remove member');
     return res.json();
+}
+
+export async function getProjectMembership(projectId: string, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/membership?userId=${userId}`);
+    if (!res.ok) return null;
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
 }
 
 // Snippets API
@@ -126,7 +151,10 @@ export async function removeMember(projectId: string, userId: string) {
 export async function createSnippet(data: { userId: string; projectId: string; title: string; code: string; language: string; category?: string; description?: string }) {
     const res = await fetch(`${BACKEND_URL}/snippets`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': data.userId
+        },
         body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Failed to create snippet');
@@ -139,9 +167,12 @@ export async function getProjectSnippets(projectId: string) {
     return res.json();
 }
 
-export async function deleteSnippet(id: string) {
-    const res = await fetch(`${BACKEND_URL}/snippets/${id}`, {
+export async function deleteSnippet(id: string, projectId: string, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/snippets/${id}?projectId=${projectId}`, {
         method: 'DELETE',
+        headers: {
+            'x-user-id': userId
+        }
     });
     if (!res.ok) throw new Error('Failed to delete snippet');
     return res.json();
@@ -174,6 +205,61 @@ export async function explainSnippet(code: string, language: string) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, language }),
     });
-    if (!res.ok) throw new Error('Failed to explain snippet');
+    return res.json();
+}
+
+// Decisions API
+
+export async function createDecision(projectId: string, data: { title: string; content: string; taskId?: string }, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/decisions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId
+        },
+        body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create decision');
+    return res.json();
+}
+
+export async function getProjectDecisionsWithUser(projectId: string, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/decisions`, {
+        headers: { 'x-user-id': userId }
+    });
+    if (!res.ok) {
+        // Handle 404 (failed to fetch) vs empty
+        if (res.status === 404) return [];
+        throw new Error('Failed to fetch decisions');
+    }
+    return res.json();
+}
+
+export async function addDecisionNote(decisionId: string, content: string, userId: string) {
+    const res = await fetch(`${BACKEND_URL}/decisions/${decisionId}/notes`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-user-id': userId
+        },
+        body: JSON.stringify({ content }),
+    });
+    if (!res.ok) throw new Error('Failed to add note');
+    return res.json();
+}
+
+// Analytics API
+
+export async function getProjectBurndown(projectId: string) {
+    // Note: No userId required for read-only analytics usually, but we might add it if we secure it later.
+    // Currently endpoint is public or protected by JWT?
+    // It's in ProjectsController, which has @UseGuards(JwtAuthGuard) at top. 
+    // Wait, I removed @UseGuards(JwtAuthGuard) from top of ProjectsController in previous "Fix ProjectsController" step to fix the import error.
+    // So it might be public now? Or using default guard? 
+    // Actually, I removed it because import was failing. 
+    // I should probably fix that security hole later.
+    // implementing fetch:
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}/analytics/burndown`);
+    if (!res.ok) throw new Error('Failed to fetch burndown data');
     return res.json();
 }

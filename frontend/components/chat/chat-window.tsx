@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, MessageSquare, MoreVertical, Pin, Bot } from 'lucide-react';
 import { useSession } from 'next-auth/react';
-import { askAI } from '@/lib/api';
+import { askAI, getProjectMembership } from '@/lib/api';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,6 +19,7 @@ import { CreateTaskDialog } from '../dashboard/create-task-dialog';
 
 interface Props {
     teamId: string;
+    projectId?: string;
 }
 
 interface Message {
@@ -32,16 +33,26 @@ interface Message {
 
 let socket: Socket;
 
-export function ChatWindow({ teamId }: Props) {
+export function ChatWindow({ teamId, projectId }: Props) {
     const { data: session } = useSession();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [isAiLoading, setIsAiLoading] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
 
     const [taskDialogOpen, setTaskDialogOpen] = useState(false);
     const [taskDialogDefaultTitle, setTaskDialogDefaultTitle] = useState('');
+
+    useEffect(() => {
+        if (session?.user && projectId) {
+            // @ts-ignore
+            getProjectMembership(projectId, session.user.id).then(m => {
+                if (m) setRole(m.role);
+            });
+        }
+    }, [session, projectId]);
 
     useEffect(() => {
         // Initialize Socket
@@ -50,7 +61,11 @@ export function ChatWindow({ teamId }: Props) {
         socket.on('connect', () => {
             console.log('Connected to chat server');
             setIsConnected(true);
-            socket.emit('joinTeam', teamId);
+            if (projectId) {
+                socket.emit('joinProject', projectId);
+            } else {
+                socket.emit('joinTeam', teamId);
+            }
         });
 
         socket.on('receiveMessage', (message: Message) => {
@@ -61,28 +76,30 @@ export function ChatWindow({ teamId }: Props) {
             setMessages(prev => prev.map(m => m.id === updatedMessage.id ? updatedMessage : m));
         });
 
-        // Fetch history (using socket for now, could be API)
-        socket.emit('getHistory', teamId, (history: Message[]) => {
+        // Fetch history
+        // If projectId is present, we ask for project history, otherwise team history
+        const historyPayload = projectId ? { teamId, projectId } : teamId;
+        socket.emit('getHistory', historyPayload, (history: Message[]) => {
             if (Array.isArray(history)) setMessages(history);
         });
 
         return () => {
             socket.disconnect();
         };
-    }, [teamId]);
+    }, [teamId, projectId]);
 
-    useEffect(() => {
-        // Auto-scroll to bottom
-        if (scrollRef.current) {
-            scrollRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [messages]);
+    // ...
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !session?.user) return;
+        if (role === 'VIEWER') {
+            alert("Viewers cannot send messages.");
+            return;
+        }
 
         // Check for AI Command
         if (newMessage.startsWith('/ask')) {
+            // ... existing AI logic (keep as is)
             const query = newMessage.replace('/ask', '').trim();
             if (!query) return;
 
@@ -125,6 +142,7 @@ export function ChatWindow({ teamId }: Props) {
             teamId,
             senderId: (session.user as any).id,
             content: newMessage,
+            projectId, // Pass projectId if exists
         };
 
         socket.emit('sendMessage', payload);
@@ -138,10 +156,12 @@ export function ChatWindow({ teamId }: Props) {
     };
 
     const handlePinMessage = (messageId: string, isPinned: boolean) => {
+        if (role === 'VIEWER') return;
         socket.emit('pinMessage', { teamId, messageId, isPinned });
     };
 
     const handleCreateTaskFromMessage = (content: string) => {
+        if (role === 'VIEWER') return;
         setTaskDialogDefaultTitle(content);
         setTaskDialogOpen(true);
     };
@@ -154,7 +174,7 @@ export function ChatWindow({ teamId }: Props) {
                 <CardTitle className="flex items-center text-lg justify-between">
                     <div className="flex items-center">
                         <MessageSquare className="w-5 h-5 mr-2" />
-                        Team Chat
+                        {projectId ? 'Project Chat' : 'Team Chat'}
                         {isConnected && <span className="ml-2 w-2 h-2 bg-green-500 rounded-full" title="Connected"></span>}
                     </div>
                 </CardTitle>
@@ -249,13 +269,14 @@ export function ChatWindow({ teamId }: Props) {
                 </ScrollArea>
                 <div className="p-4 border-t flex gap-2">
                     <Input
-                        placeholder="Type a message..."
+                        placeholder={role === 'VIEWER' ? "Viewers cannot send messages" : "Type a message..."}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={handleKeyPress}
                         className="flex-1"
+                        disabled={role === 'VIEWER'}
                     />
-                    <Button onClick={handleSendMessage} size="icon">
+                    <Button onClick={handleSendMessage} size="icon" disabled={role === 'VIEWER'}>
                         <Send className="w-4 h-4" />
                     </Button>
                 </div>

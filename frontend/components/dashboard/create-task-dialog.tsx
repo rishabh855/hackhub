@@ -30,7 +30,10 @@ interface Props {
     defaultTitle?: string;
 }
 
+import { useSession } from "next-auth/react";
+
 export function CreateTaskDialog({ projectId, teamId, trigger, open, onOpenChange, onTaskCreated, defaultTitle = '' }: Props) {
+    const { data: session } = useSession();
     const { toast } = useToast();
     const [internalOpen, setInternalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -67,7 +70,7 @@ export function CreateTaskDialog({ projectId, teamId, trigger, open, onOpenChang
                 title,
                 projectId: projectId || selectedProjectId,
                 priority,
-            });
+            }, session?.user?.id || '');
             toast({ title: "Task created" });
             setIsOpen(false);
             setTitle('');

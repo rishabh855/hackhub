@@ -10,6 +10,7 @@ import { TasksModule } from './tasks/tasks.module';
 import { ChatModule } from './chat/chat.module';
 import { SnippetsModule } from './snippets/snippets.module';
 import { AiModule } from './ai/ai.module';
+import { DecisionsModule } from './decisions/decisions.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AiModule } from './ai/ai.module';
     ChatModule,
     SnippetsModule,
     AiModule,
+    DecisionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

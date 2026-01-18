@@ -64,10 +64,11 @@ export function TeamMembersDialog({ projectId }: Props) {
     }
 
     async function handleInvite() {
-        if (!inviteEmail) return;
+        if (!inviteEmail || !session?.user) return;
         setLoading(true);
         try {
-            await inviteProjectMember(projectId, inviteEmail, inviteRole);
+            // @ts-ignore
+            await inviteProjectMember(projectId, inviteEmail, inviteRole, (session.user as any).id);
             setInviteEmail('');
             loadMembers();
             toast({ title: 'Member invited' });
@@ -79,8 +80,10 @@ export function TeamMembersDialog({ projectId }: Props) {
     }
 
     async function handleUpdateRole(userId: string, newRole: string) {
+        if (!session?.user) return;
         try {
-            await updateMemberRole(projectId, userId, newRole);
+            // @ts-ignore
+            await updateMemberRole(projectId, userId, newRole, (session.user as any).id);
             loadMembers();
             toast({ title: 'Role updated' });
         } catch (err) {
@@ -89,8 +92,10 @@ export function TeamMembersDialog({ projectId }: Props) {
     }
 
     async function handleRemove(userId: string) {
+        if (!session?.user) return;
         try {
-            await removeMember(projectId, userId);
+            // @ts-ignore
+            await removeMember(projectId, userId, (session.user as any).id);
             loadMembers();
             toast({ title: 'Member removed' });
         } catch (err) {

@@ -24,27 +24,31 @@ model User {
   role          String    @default("USER") // USER, ADMIN
   accounts      Account[]
   sessions      Session[]
-
+  
   // Relations
-  teams TeamMember[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  teams         TeamMember[]
+  assignedTasks Task[]
+  messages      Message[]
+  snippets      Snippet[]
+  projectMembers ProjectMember[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 }
 
 model Account {
-  id                String  @id @default(cuid())
-  userId            String
-  type              String
-  provider          String
-  providerAccountId String
-  refresh_token     String? @db.Text
-  access_token      String? @db.Text
-  expires_at        Int?
-  token_type        String?
-  scope             String?
-  id_token          String? @db.Text
-  session_state     String?
+  id                 String  @id @default(cuid())
+  userId             String
+  type               String
+  provider           String
+  providerAccountId  String
+  refresh_token      String? @db.Text
+  access_token       String? @db.Text
+  expires_at         Int?
+  token_type         String?
+  scope              String?
+  id_token           String? @db.Text
+  session_state      String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -70,39 +74,106 @@ model VerificationToken {
 // HackHub Domain Models
 
 model Team {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
-
-  members  TeamMember[]
-  projects Project[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  
+  members     TeamMember[]
+  projects    Project[]
+  messages    Message[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model TeamMember {
-  id     String @id @default(cuid())
-  userId String
-  teamId String
-  role   String @default("MEMBER") // OWNER, MEMBER
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  role      String   @default("MEMBER") // OWNER, MEMBER
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
 
   @@unique([userId, teamId])
 }
 
 model Project {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   name        String
   description String?
   teamId      String
-
-  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
+  
+  team        Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
   // Future: Tasks, Snippets, etc.
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  tasks       Task[]
+  snippets    Snippet[]
+  members     ProjectMember[]
+}
 
+model ProjectMember {
+  id        String   @id @default(cuid())
+  userId    String
+  projectId String
+  role      String   @default("VIEWER") // OWNER, EDITOR, VIEWER
+  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+model Task {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("TODO") // TODO, IN_PROGRESS, REVIEW, DONE
+  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  dueDate     DateTime?
+  labels      String[]
+  projectId   String
+  assigneeId  String?
+  isBlocked   Boolean  @default(false)
+  blockedReason String?
+  
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee    User?    @relation(fields: [assigneeId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  senderId  String
+  teamId    String
+  isPinned  Boolean  @default(false)
+  
+  sender    User     @relation(fields: [senderId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+}
+
+model Snippet {
+  id          String   @id @default(cuid())
+  title       String
+  code        String   @db.Text
+  language    String
+  category    String   @default("OTHER")
+  description String?
+  projectId   String
+  userId      String
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

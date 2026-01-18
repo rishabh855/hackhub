@@ -12,14 +12,14 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
-
-import { ChatWindow } from '@/components/chat/chat-window';
 import { KanbanBoard } from '@/components/kanban/kanban-board';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SnippetList } from "@/components/snippets/snippet-list";
 import { AiTaskSuggester } from '@/components/ai/ai-task-suggester';
+import { ChatWindow } from '@/components/chat/chat-window';
+import { DecisionList } from '@/components/decisions/decision-list';
+import { ProgressTab } from '@/components/analytics/progress-tab';
 
-// Define simpler types locally if Prisma types are complex to import
 type Project = {
     id: string;
     name: string;
@@ -81,9 +81,13 @@ export function ProjectList({ teamId }: { teamId: string }) {
                     </div>
 
                     <Tabs defaultValue="kanban" className="w-full">
+
                         <TabsList>
                             <TabsTrigger value="kanban">Tasks & Kanban</TabsTrigger>
                             <TabsTrigger value="snippets">Code Snippets</TabsTrigger>
+                            <TabsTrigger value="chat">Chat</TabsTrigger>
+                            <TabsTrigger value="decisions">Decisions</TabsTrigger>
+                            <TabsTrigger value="progress">Progress</TabsTrigger>
                         </TabsList>
                         <TabsContent value="kanban" className="h-[calc(100vh-250px)]">
                             <div className="flex justify-end mb-2">
@@ -94,6 +98,21 @@ export function ProjectList({ teamId }: { teamId: string }) {
                         <TabsContent value="snippets">
                             <div className="max-w-4xl mx-auto py-6">
                                 <SnippetList projectId={selectedProject.id} />
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="chat" className="h-[calc(100vh-250px)]">
+                            <div className="max-w-4xl mx-auto py-6 h-full">
+                                <ChatWindow teamId={teamId} projectId={selectedProject.id} />
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="decisions">
+                            <div className="max-w-4xl mx-auto py-6">
+                                <DecisionList projectId={selectedProject.id} role={(session?.user as any)?.role || 'VIEWER'} />
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="progress">
+                            <div className="max-w-4xl mx-auto py-6">
+                                <ProgressTab projectId={selectedProject.id} />
                             </div>
                         </TabsContent>
                     </Tabs>
@@ -172,7 +191,7 @@ export function ProjectList({ teamId }: { teamId: string }) {
                         >
                             <X className="h-4 w-4" />
                         </Button>
-                        <ChatWindow teamId={teamId} />
+                        <ChatWindow teamId={teamId} projectId={selectedProject?.id} />
                     </div>
                 ) : (
                     <Button

@@ -31,6 +31,8 @@ model User {
   messages      Message[]
   snippets      Snippet[]
   projectMembers ProjectMember[]
+  decisions     Decision[]
+  decisionNotes DecisionNote[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -114,6 +116,8 @@ model Project {
   tasks       Task[]
   snippets    Snippet[]
   members     ProjectMember[]
+  messages    Message[]
+  decisions   Decision[]
 }
 
 model ProjectMember {
@@ -138,7 +142,10 @@ model Task {
   labels      String[]
   projectId   String
   assigneeId  String?
-  
+  isBlocked   Boolean  @default(false)
+  blockedReason String?
+  completedAt DateTime?
+
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee    User?    @relation(fields: [assigneeId], references: [id])
 
@@ -151,10 +158,12 @@ model Message {
   content   String
   senderId  String
   teamId    String
+  projectId String?
   isPinned  Boolean  @default(false)
   
   sender    User     @relation(fields: [senderId], references: [id])
   team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
 }
@@ -174,4 +183,34 @@ model Snippet {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model Decision {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text
+  status    String   @default("DECIDED")
+  projectId String
+  userId    String
+  taskId    String?
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+  notes     DecisionNote[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model DecisionNote {
+  id         String   @id @default(cuid())
+  content    String   @db.Text
+  decisionId String
+  userId     String
+
+  decision   Decision @relation(fields: [decisionId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }

@@ -18,12 +18,11 @@ import { TaskCard } from './task-card';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from '@/components/ui/dialog';
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+} from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -33,11 +32,11 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { TaskDetailView } from "./task-detail-view";
 import { TeamMembersDialog } from "../dashboard/team-members-dialog";
 import { CreateTaskDialog } from "../dashboard/create-task-dialog";
-import { getProjectMembers, getProjectTasks, updateTask, deleteTask } from '@/lib/api';
+import { getProjectMembers, getProjectTasks, updateTask, deleteTask, getProjectMembership } from '@/lib/api';
+import { useSession } from "next-auth/react";
 
 interface Task {
     id: string;
@@ -45,6 +44,9 @@ interface Task {
     description?: string;
     status: string; // 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'
     priority: string; // 'LOW', 'MEDIUM', 'HIGH'
+    dueDate?: string;
+    isBlocked?: boolean;
+    blockedReason?: string;
 }
 
 interface Props {
@@ -59,10 +61,12 @@ const COLUMNS = [
 ];
 
 export function KanbanBoard({ projectId }: Props) {
+    const { data: session } = useSession();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [isMounted, setIsMounted] = useState(false);
+    const [role, setRole] = useState<string | null>(null);
 
     // Sheet State (for Task Details)
     const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -72,6 +76,15 @@ export function KanbanBoard({ projectId }: Props) {
         setIsMounted(true);
         loadTasks();
     }, [projectId]);
+
+    useEffect(() => {
+        if (session?.user && projectId) {
+            // @ts-ignore
+            getProjectMembership(projectId, session.user.id).then(m => {
+                if (m) setRole(m.role);
+            });
+        }
+    }, [session, projectId]);
 
     async function loadTasks() {
         try {
@@ -83,17 +96,21 @@ export function KanbanBoard({ projectId }: Props) {
     }
 
     const sensors = useSensors(
-        useSensor(PointerSensor),
+        useSensor(PointerSensor, {
+            activationConstraint: { distance: 5 } // Fix for button clicks
+        }),
         useSensor(KeyboardSensor, {
             coordinateGetter: sortableKeyboardCoordinates,
         })
     );
 
     function handleDragStart(event: DragStartEvent) {
+        if (role === 'VIEWER') return;
         setActiveId(event.active.id as string);
     }
 
     async function handleDragEnd(event: DragEndEvent) {
+        if (role === 'VIEWER') return;
         const { active, over } = event;
 
         if (!over) {
@@ -125,7 +142,8 @@ export function KanbanBoard({ projectId }: Props) {
             );
 
             try {
-                await updateTask(activeTask.id, { status: newStatus });
+                // @ts-ignore
+                await updateTask(activeTask.id, { status: newStatus }, session?.user?.id, projectId);
             } catch (err) {
                 console.error("Failed to update task status", err);
                 loadTasks(); // Revert on failure
@@ -136,9 +154,14 @@ export function KanbanBoard({ projectId }: Props) {
     }
 
     async function handleDeleteTask(id: string) {
+        if (role === 'VIEWER') {
+            alert('Viewers cannot delete tasks.');
+            return;
+        }
         console.log('Deleting task:', id);
         try {
-            await deleteTask(id);
+            // @ts-ignore
+            await deleteTask(id, projectId, session?.user?.id);
             setTasks(prev => prev.filter(t => t.id !== id));
             console.log('Task deleted successfully');
         } catch (err: any) {
@@ -195,16 +218,18 @@ export function KanbanBoard({ projectId }: Props) {
                 {/* New Task Dialog */}
                 <div className="flex gap-2">
                     <TeamMembersDialog projectId={projectId} />
-                    <CreateTaskDialog
-                        projectId={projectId}
-                        trigger={
-                            <Button>
-                                <Plus className="w-4 h-4 mr-2" />
-                                New Task
-                            </Button>
-                        }
-                        onTaskCreated={loadTasks}
-                    />
+                    {role !== 'VIEWER' && (
+                        <CreateTaskDialog
+                            projectId={projectId}
+                            trigger={
+                                <Button>
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    New Task
+                                </Button>
+                            }
+                            onTaskCreated={loadTasks}
+                        />
+                    )}
                 </div>
             </div>
 
@@ -235,17 +260,24 @@ export function KanbanBoard({ projectId }: Props) {
 
             <Sheet open={isSheetOpen} onOpenChange={(open) => {
                 setIsSheetOpen(open);
-                if (!open) loadTasks(); // Refresh when closing to show updates
+                if (!open) {
+                    loadTasks();
+                    setSelectedSheetTask(null);
+                }
             }}>
-                <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto">
+                <SheetContent side="right" className="w-[400px] sm:w-[540px] overflow-y-auto pt-10">
                     <SheetHeader>
                         <SheetTitle>Task Details</SheetTitle>
                     </SheetHeader>
                     {selectedSheetTask && (
                         <TaskDetailView
                             task={selectedSheetTask}
+                            projectId={projectId}
+                            role={role || 'VIEWER'}
                             onUpdate={() => {
-                                loadTasks(); // Refresh list to get latest data
+                                // Auto-saving, might not need full reload but safe to do
+                                // Don't close sheet on update
+                                loadTasks();
                             }}
                         />
                     )}

@@ -11,6 +11,7 @@ interface Task {
     description?: string;
     status: string;
     priority: string;
+    dueDate?: string | Date;
 }
 
 interface Props {
@@ -68,9 +69,21 @@ export function TaskCard({ task, deleteTask, onClick }: Props) {
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
                     <div className="flex items-center justify-between mt-2">
+                        {task.description && (
+                            <p className="text-sm text-gray-500 line-clamp-2 mr-2 mb-2">
+                                {task.description}
+                            </p>
+                        )}
+                    </div>
+                    <div className="flex items-center justify-between mt-2">
                         <Badge variant="secondary" className={priorityColor}>
                             {task.priority}
                         </Badge>
+                        {task.dueDate && (
+                            <span className="text-xs text-muted-foreground bg-gray-100 px-2 py-1 rounded">
+                                {new Date(task.dueDate).toLocaleDateString()}
+                            </span>
+                        )}
                     </div>
                 </CardContent>
             </Card>

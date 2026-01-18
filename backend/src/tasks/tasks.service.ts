@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma.service';
 export class TasksService {
     constructor(private prisma: PrismaService) { }
 
-    async createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[] }) {
+    async createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[]; isBlocked?: boolean; blockedReason?: string }) {
         return this.prisma.task.create({
             data: {
                 title: data.title,
@@ -16,7 +16,11 @@ export class TasksService {
                 status: 'TODO',
                 dueDate: data.dueDate,
                 labels: data.labels || [],
+                isBlocked: data.isBlocked || false,
+                blockedReason: data.blockedReason,
+                completedAt: null, // Tasks are created as TODO, so completedAt is null
             },
+            include: { assignee: true }
         });
     }
 
@@ -28,7 +32,7 @@ export class TasksService {
         });
     }
 
-    async updateTask(id: string, data: { status?: string; priority?: string; assigneeId?: string; title?: string; description?: string; dueDate?: Date | null; labels?: string[] }) {
+    async updateTask(id: string, data: { status?: string; priority?: string; assigneeId?: string; title?: string; description?: string; dueDate?: Date | null; labels?: string[]; isBlocked?: boolean; blockedReason?: string }) {
         const task = await this.prisma.task.findUnique({ where: { id } });
         if (!task) throw new NotFoundException('Task not found');
 

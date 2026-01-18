@@ -20,18 +20,25 @@ interface Snippet {
     createdAt: string;
 }
 
+import { useSession } from 'next-auth/react';
+
 interface SnippetCardProps {
     snippet: Snippet;
     onDelete: () => void;
+    projectId: string;
+    role: string;
 }
 
-export function SnippetCard({ snippet, onDelete }: SnippetCardProps) {
+export function SnippetCard({ snippet, onDelete, projectId, role }: SnippetCardProps) {
+    const { data: session } = useSession();
     const [showDetails, setShowDetails] = useState(false);
+    const isViewer = role === 'VIEWER';
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation(); // Prevent opening details when deleting
         try {
-            await deleteSnippet(snippet.id);
+            // @ts-ignore
+            await deleteSnippet(snippet.id, projectId, session?.user?.id);
             onDelete();
         } catch (err) {
             console.error(err);
@@ -63,9 +70,11 @@ export function SnippetCard({ snippet, onDelete }: SnippetCardProps) {
                         <div onClick={(e) => e.stopPropagation()}>
                             <SnippetExplainer code={snippet.code} language={snippet.language} />
                         </div>
-                        <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={handleDelete}>
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
+                        {!isViewer && (
+                            <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={handleDelete}>
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        )}
                     </div>
                 </CardHeader>
                 <CardContent className="bg-muted/30 p-0">
