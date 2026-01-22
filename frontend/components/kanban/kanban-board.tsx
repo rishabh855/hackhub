@@ -33,8 +33,8 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { TaskDetailView } from "./task-detail-view";
-import { TeamMembersDialog } from "../dashboard/team-members-dialog";
-import { CreateTaskDialog } from "../dashboard/create-task-dialog";
+import { TeamMembersDialog } from "./team-members-dialog";
+import { CreateTaskDialog } from "./create-task-dialog";
 import { getProjectMembers, getProjectTasks, updateTask, deleteTask, getProjectMembership } from '@/lib/api';
 import { useSession } from "next-auth/react";
 import { AiTaskSuggester } from '@/components/ai/ai-task-suggester';

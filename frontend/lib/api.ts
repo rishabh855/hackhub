@@ -275,7 +275,9 @@ export async function getProjectDecisionsWithUser(projectId: string, userId: str
     if (!res.ok) {
         // Handle 404 (failed to fetch) vs empty
         if (res.status === 404) return [];
-        throw new Error('Failed to fetch decisions');
+        const text = await res.text();
+        console.error(`Failed to fetch decisions. Status: ${res.status} ${res.statusText}. Response: ${text}`);
+        throw new Error(`Failed to fetch decisions: ${res.status} ${res.statusText}`);
     }
     return res.json();
 }

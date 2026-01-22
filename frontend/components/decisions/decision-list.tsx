@@ -24,6 +24,23 @@ import { createDecision, getProjectDecisionsWithUser, addDecisionNote, getProjec
 import { format } from 'date-fns';
 // ... (imports)
 
+interface Note {
+    id: string;
+    content: string;
+    createdAt: string;
+    user: { name: string };
+}
+
+interface Decision {
+    id: string;
+    title: string;
+    content: string;
+    status: string;
+    createdAt: string;
+    user: { name: string };
+    notes: Note[];
+}
+
 interface Props {
     projectId: string;
     role?: string; // Optional
@@ -63,8 +80,14 @@ export function DecisionList({ projectId, role: initialRole }: Props) {
 
     async function loadDecisions() {
         if (!session?.user) return;
+        const userId = (session.user as any).id;
+        console.log('[DecisionList] Loading decisions for user:', userId);
+        if (!userId) {
+            console.error('[DecisionList] User ID is missing in session!');
+            return;
+        }
         try {
-            const data = await getProjectDecisionsWithUser(projectId, (session.user as any).id);
+            const data = await getProjectDecisionsWithUser(projectId, userId);
             setDecisions(data);
         } catch (error) {
             console.error(error);

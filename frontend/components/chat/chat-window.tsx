@@ -16,7 +16,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { CreateTaskDialog } from '../dashboard/create-task-dialog';
+import { CreateTaskDialog } from '@/components/kanban/create-task-dialog';
 
 interface Props {
     teamId: string;

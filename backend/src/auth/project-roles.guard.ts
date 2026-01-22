@@ -24,6 +24,8 @@ export class ProjectRolesGuard implements CanActivate {
         const userId = request.headers['x-user-id'] || request.body?.userId || request.query?.userId;
         let projectId = request.headers['x-project-id'] || request.body?.projectId || request.query?.projectId || request.params?.projectId || request.params?.id;
 
+        console.log(`[ProjectRolesGuard] Checking access. UserId: ${userId}, ProjectId: ${projectId}, Path: ${request.path}, Params: ${JSON.stringify(request.params)}`);
+
         if (!userId) {
             throw new ForbiddenException('User ID required for RBAC check');
         }
