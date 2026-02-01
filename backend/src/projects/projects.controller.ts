@@ -13,23 +13,17 @@ export class ProjectsController {
         return this.projectsService.createProject(body.teamId, body.name, body.userId, body.description);
     }
 
-    @Get(':id')
-    getProject(@Param('id') id: string) {
-        return this.projectsService.getProject(id);
-    }
-
-    @Patch(':id')
-    @ProjectRoles(ProjectRole.EDITOR)
-    @UseGuards(ProjectRolesGuard)
-    update(@Param('id') id: string, @Body() body: any) {
-        // Body filtering could be done via DTO, for now passing safe subsets in service is implicit or we trust Editor.
-        return this.projectsService.updateProject(id, body);
-    }
-
     @Get()
     findAll(@Query('teamId') teamId: string) {
         return this.projectsService.getTeamProjects(teamId);
     }
+
+    @Get(':id/analytics/burndown')
+    getBurndown(@Param('id') projectId: string) {
+        console.log(`Getting burndown for project ${projectId}`);
+        return this.projectsService.getBurndown(projectId);
+    }
+
     @Get(':id/membership')
     getMembership(@Param('id') projectId: string, @Query('userId') userId: string) {
         return this.projectsService.getMembership(projectId, userId);
@@ -61,8 +55,15 @@ export class ProjectsController {
         return this.projectsService.removeMember(projectId, userId);
     }
 
-    @Get(':id/analytics/burndown')
-    getBurndown(@Param('id') projectId: string) {
-        return this.projectsService.getBurndown(projectId);
+    @Get(':id')
+    getProject(@Param('id') id: string) {
+        return this.projectsService.getProject(id);
+    }
+
+    @Patch(':id')
+    @ProjectRoles(ProjectRole.EDITOR)
+    @UseGuards(ProjectRolesGuard)
+    update(@Param('id') id: string, @Body() body: any) {
+        return this.projectsService.updateProject(id, body);
     }
 }

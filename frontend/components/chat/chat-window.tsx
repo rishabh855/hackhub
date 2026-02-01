@@ -195,8 +195,8 @@ export function ChatWindow({ teamId, projectId }: Props) {
                 )}
             </CardHeader>
             <CardContent className="flex-1 flex flex-col p-0 overflow-hidden">
-                <ScrollArea className="flex-1 p-4">
-                    <div className="space-y-4">
+                <ScrollArea className="flex-1 overflow-hidden">
+                    <div className="space-y-4 p-4">
                         <AnimatePresence initial={false}>
                             {messages.map((msg, index) => {
                                 const isMe = msg.senderId === (session?.user as any)?.id;

@@ -40,6 +40,7 @@ export class ProjectRolesGuard implements CanActivate {
             throw new BadRequestException('Project ID required for RBAC check');
         }
 
+        // Check direct Project Membership
         const membership = await this.prisma.projectMember.findUnique({
             where: {
                 userId_projectId: {
@@ -49,7 +50,38 @@ export class ProjectRolesGuard implements CanActivate {
             },
         });
 
-        if (!membership) {
+        let userRole: ProjectRole | null = null;
+
+        if (membership) {
+            userRole = membership.role as ProjectRole;
+        } else {
+            // Fallback: Check if user is a member of the parent Team
+            // This allows Team Members to automatically access Team Projects
+            const project = await this.prisma.project.findUnique({
+                where: { id: projectId },
+                select: { teamId: true }
+            });
+
+            if (project) {
+                const teamMember = await this.prisma.teamMember.findUnique({
+                    where: {
+                        userId_teamId: {
+                            userId: userId,
+                            teamId: project.teamId
+                        }
+                    }
+                });
+
+                if (teamMember) {
+                    // Map Team Role to Project Role equivalent
+                    // Team OWNER -> Project OWNER
+                    // Team MEMBER -> Project EDITOR (Team members are collaborators)
+                    userRole = teamMember.role === 'OWNER' ? ProjectRole.OWNER : ProjectRole.EDITOR;
+                }
+            }
+        }
+
+        if (!userRole) {
             throw new ForbiddenException('You are not a member of this project');
         }
 
@@ -61,7 +93,7 @@ export class ProjectRolesGuard implements CanActivate {
             [ProjectRole.VIEWER]: 1,
         };
 
-        const userLevel = roleLevel[membership.role as ProjectRole] || 0;
+        const userLevel = roleLevel[userRole] || 0;
 
         // We assume requiredRoles lists the *minimum* role needed? 
         // Or usually generic roles allows specific list. 

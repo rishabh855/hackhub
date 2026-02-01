@@ -49,11 +49,39 @@ export class ProjectsService {
     }
 
     async getMembership(projectId: string, userId: string) {
-        return this.prisma.projectMember.findUnique({
+        const member = await this.prisma.projectMember.findUnique({
             where: {
                 userId_projectId: { userId, projectId },
             },
         });
+
+        if (member) return member;
+
+        // Fallback: Check if user is a member of the parent Team (Implicit Access)
+        const project = await this.prisma.project.findUnique({
+            where: { id: projectId },
+            select: { teamId: true }
+        });
+
+        if (project) {
+            const teamMember = await this.prisma.teamMember.findUnique({
+                where: {
+                    userId_teamId: { userId, teamId: project.teamId }
+                }
+            });
+
+            if (teamMember) {
+                // Return synthetic project member based on team role
+                return {
+                    id: `implicit-${teamMember.id}`,
+                    userId,
+                    projectId,
+                    role: teamMember.role === 'OWNER' ? 'OWNER' : 'EDITOR',
+                };
+            }
+        }
+
+        return null;
     }
 
     async getProjectMembers(projectId: string) {
@@ -101,31 +129,47 @@ export class ProjectsService {
             orderBy: { createdAt: 'asc' }
         });
 
+        console.log(`[getBurndown] Project: ${projectId}, Found tasks: ${tasks.length}`);
+
         if (tasks.length === 0) return { chartData: [], blockedTasks: [] };
 
         const startDate = tasks[0].createdAt;
         // End date: Latest due date or today + 7 days
         let endDate = new Date();
         const dueDates = tasks.map(t => t.dueDate).filter(d => d !== null) as Date[];
+
         if (dueDates.length > 0) {
             // Find max due date
-            endDate = dueDates.reduce((a, b) => a > b ? a : b);
+            endDate = new Date(Math.max(...dueDates.map(d => new Date(d).getTime())));
         } else {
             endDate.setDate(endDate.getDate() + 7);
         }
+
+        // Ensure endDate is not before startDate
+        if (endDate < startDate) {
+            endDate = new Date(startDate);
+            endDate.setDate(endDate.getDate() + 1); // Minimum 1 day range
+        }
+
+        console.log(`[getBurndown] Start: ${startDate}, End: ${endDate}`);
 
         // Generate dates from start to end (exclude time)
         const dates: Date[] = [];
         let currentDate = new Date(startDate);
         currentDate.setHours(0, 0, 0, 0);
-        const normalizedStartDate = new Date(currentDate); // Capture start date correctly
+        const normalizedStartDate = new Date(currentDate);
 
         const lastDate = new Date(endDate);
         lastDate.setHours(0, 0, 0, 0);
 
-        while (currentDate <= lastDate) {
+        // Safety check to prevent infinite loops if dates are weird
+        const MAX_DAYS = 365 * 2;
+        let dayCount = 0;
+
+        while (currentDate <= lastDate && dayCount < MAX_DAYS) {
             dates.push(new Date(currentDate));
             currentDate.setDate(currentDate.getDate() + 1);
+            dayCount++;
         }
 
         const totalTasks = tasks.length;
