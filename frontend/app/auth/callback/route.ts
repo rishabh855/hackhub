@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const next = searchParams.get('next') ?? '/teams'
 
     if (code) {
-        const cookieStore = cookies()
+        const cookieStore = await cookies() // ✅ FIX IS HERE
 
         const supabase = createServerClient(
             process.env.NEXT_PUBLIC_SUPABASE_URL!,
