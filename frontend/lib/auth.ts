@@ -1,12 +1,12 @@
 import type { NextAuthOptions } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
-import { PrismaAdapter } from "@auth/prisma-adapter";
+import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/lib/prisma";
 import CredentialsProvider from "next-auth/providers/credentials";
 
 export const authOptions: NextAuthOptions = {
-    // adapter: PrismaAdapter(prisma),
+    adapter: PrismaAdapter(prisma),
     providers: [
         GoogleProvider({
             clientId: process.env.GOOGLE_CLIENT_ID || "placeholder_id",
@@ -67,33 +67,7 @@ export const authOptions: NextAuthOptions = {
         },
         async jwt({ token, user, account }) {
             if (user) {
-                // Determine the correct email and name from available fields
-                const email = user.email;
-                const name = user.name || (user as any).login; // Fallback for GitHub
-
-                if (email) {
-                    try {
-                        const dbUser = await prisma.user.upsert({
-                            where: { email },
-                            update: {
-                                name: name,
-                                image: user.image
-                            },
-                            create: {
-                                email,
-                                name: name,
-                                image: user.image,
-                            },
-                        });
-                        token.id = dbUser.id;
-                    } catch (error) {
-                        console.error("Error syncing user to DB:", error);
-                        // Fallback to minimal info if DB fails, though functionality might be limited
-                        token.id = user.id;
-                    }
-                } else {
-                    token.id = user.id;
-                }
+                token.id = user.id;
             }
             return token;
         },

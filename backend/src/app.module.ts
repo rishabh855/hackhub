@@ -11,6 +11,7 @@ import { ChatModule } from './chat/chat.module';
 import { SnippetsModule } from './snippets/snippets.module';
 import { AiModule } from './ai/ai.module';
 import { DecisionsModule } from './decisions/decisions.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { DecisionsModule } from './decisions/decisions.module';
     SnippetsModule,
     AiModule,
     DecisionsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
