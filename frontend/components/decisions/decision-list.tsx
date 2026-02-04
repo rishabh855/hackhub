@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -47,7 +47,7 @@ interface Props {
 }
 
 export function DecisionList({ projectId, role: initialRole }: Props) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [decisions, setDecisions] = useState<Decision[]>([]);
     const [loading, setLoading] = useState(false);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -76,7 +76,7 @@ export function DecisionList({ projectId, role: initialRole }: Props) {
 
     useEffect(() => {
         loadDecisions();
-    }, [projectId]);
+    }, [projectId, session]);
 
     async function loadDecisions() {
         if (!session?.user) return;

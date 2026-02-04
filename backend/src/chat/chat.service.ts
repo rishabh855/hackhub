@@ -6,15 +6,23 @@ export class ChatService {
     constructor(private prisma: PrismaService) { }
 
     async saveMessage(teamId: string, senderId: string, content: string, projectId?: string) {
-        return this.prisma.message.create({
-            data: {
-                teamId,
-                senderId,
-                content,
-                projectId,
-            },
-            include: { sender: true },
-        });
+        console.log('[ChatService] Saving message:', { teamId, senderId, content, projectId });
+        try {
+            const message = await this.prisma.message.create({
+                data: {
+                    teamId,
+                    senderId,
+                    content,
+                    projectId,
+                },
+                include: { sender: true },
+            });
+            console.log('[ChatService] Message created:', message.id);
+            return message;
+        } catch (error) {
+            console.error('[ChatService] Error creating message:', error);
+            throw error;
+        }
     }
 
     async getRecentMessages(teamId: string, projectId?: string) {

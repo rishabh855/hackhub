@@ -20,15 +20,17 @@ export class ProjectRolesGuard implements CanActivate {
 
         const request = context.switchToHttp().getRequest();
 
-        // Extract userId and projectId from various sources
-        const userId = request.headers['x-user-id'] || request.body?.userId || request.query?.userId;
+        // Get authenticated user from request (set by SupabaseAuthGuard)
+        const user = request.user;
+        if (!user || !user.id) {
+            throw new ForbiddenException('User authentication required for RBAC check');
+        }
+        const userId = user.id;
+
+        // Get API parameters
         let projectId = request.headers['x-project-id'] || request.body?.projectId || request.query?.projectId || request.params?.projectId || request.params?.id;
 
-        console.log(`[ProjectRolesGuard] Checking access. UserId: ${userId}, ProjectId: ${projectId}, Path: ${request.path}, Params: ${JSON.stringify(request.params)}`);
-
-        if (!userId) {
-            throw new ForbiddenException('User ID required for RBAC check');
-        }
+        console.log(`[ProjectRolesGuard] Checking access. UserId: ${userId}, ProjectId: ${projectId}, Path: ${request.path}`);
 
         // Special case: If we only have a resource ID (e.g. DELETE /tasks/:id), we might need projectId.
         // For simplicity, we REQUIRE the client to send projectId in query/body even for deletes if using this guard.

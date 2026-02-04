@@ -37,20 +37,28 @@ export class ChatGateway {
     async handleSendMessage(
         @MessageBody() payload: { teamId: string; senderId: string; content: string; projectId?: string },
     ) {
-        const message = await this.chatService.saveMessage(
-            payload.teamId,
-            payload.senderId,
-            payload.content,
-            payload.projectId,
-        );
-        // If it's a project message, emit to Project Room
-        if (payload.projectId) {
-            this.server.to(payload.projectId).emit('receiveMessage', message);
-        } else {
-            // Otherwise emit to Team Room
-            this.server.to(payload.teamId).emit('receiveMessage', message);
+        console.log('[ChatGateway] Received sendMessage:', payload);
+        try {
+            const message = await this.chatService.saveMessage(
+                payload.teamId,
+                payload.senderId,
+                payload.content,
+                payload.projectId,
+            );
+            console.log('[ChatGateway] Message saved:', message.id);
+
+            // If it's a project message, emit to Project Room
+            if (payload.projectId) {
+                this.server.to(payload.projectId).emit('receiveMessage', message);
+            } else {
+                // Otherwise emit to Team Room
+                this.server.to(payload.teamId).emit('receiveMessage', message);
+            }
+            return message;
+        } catch (error) {
+            console.error('[ChatGateway] Error saving message:', error);
+            throw error;
         }
-        return message;
     }
 
     @SubscribeMessage('getHistory')

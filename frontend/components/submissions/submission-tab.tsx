@@ -5,7 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { getProject, updateProject, getProjectMembership } from '@/lib/api';
 import { CheckCircle2, Save, ExternalLink } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 
 interface Props {
     projectId: string;
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export function SubmissionTab({ projectId, role: initialRole }: Props) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [role, setRole] = useState(initialRole || 'VIEWER');

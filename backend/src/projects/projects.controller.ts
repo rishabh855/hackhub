@@ -3,14 +3,17 @@ import { ProjectsService } from './projects.service';
 import { ProjectRoles } from '../auth/project-roles.decorator';
 import { ProjectRolesGuard } from '../auth/project-roles.guard';
 import { ProjectRole } from './project-role.enum';
+import { SupabaseAuthGuard } from '../auth/supabase.guard';
+import { User } from '../auth/user.decorator';
 
 @Controller('projects')
+@UseGuards(SupabaseAuthGuard)
 export class ProjectsController {
     constructor(private readonly projectsService: ProjectsService) { }
 
     @Post()
-    create(@Body() body: { teamId: string; name: string; description?: string; userId: string }) {
-        return this.projectsService.createProject(body.teamId, body.name, body.userId, body.description);
+    create(@User() user: any, @Body() body: { teamId: string; name: string; description?: string }) {
+        return this.projectsService.createProject(body.teamId, body.name, user.id, body.description);
     }
 
     @Get()
@@ -25,8 +28,8 @@ export class ProjectsController {
     }
 
     @Get(':id/membership')
-    getMembership(@Param('id') projectId: string, @Query('userId') userId: string) {
-        return this.projectsService.getMembership(projectId, userId);
+    getMembership(@Param('id') projectId: string, @User() user: any) {
+        return this.projectsService.getMembership(projectId, user.id);
     }
 
     @Get(':id/members')

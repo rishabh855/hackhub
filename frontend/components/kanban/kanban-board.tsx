@@ -36,7 +36,7 @@ import { TaskDetailView } from "./task-detail-view";
 import { TeamMembersDialog } from "./team-members-dialog";
 import { CreateTaskDialog } from "./create-task-dialog";
 import { getProjectMembers, getProjectTasks, updateTask, deleteTask, getProjectMembership } from '@/lib/api';
-import { useSession } from "next-auth/react";
+import { useUser } from "@/hooks/use-user";
 import { AiTaskSuggester } from '@/components/ai/ai-task-suggester';
 
 interface Task {
@@ -62,7 +62,7 @@ const COLUMNS = [
 ];
 
 export function KanbanBoard({ projectId }: Props) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [activeId, setActiveId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);

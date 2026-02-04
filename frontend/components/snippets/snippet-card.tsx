@@ -20,7 +20,7 @@ interface Snippet {
     createdAt: string;
 }
 
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 
 interface SnippetCardProps {
     snippet: Snippet;
@@ -30,7 +30,7 @@ interface SnippetCardProps {
 }
 
 export function SnippetCard({ snippet, onDelete, projectId, role }: SnippetCardProps) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [showDetails, setShowDetails] = useState(false);
     const isViewer = role === 'VIEWER';
 

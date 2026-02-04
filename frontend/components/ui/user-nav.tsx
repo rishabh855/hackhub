@@ -12,10 +12,19 @@ import {
     DropdownMenuShortcut,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useSession, signOut } from "next-auth/react";
+import { createClient } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/hooks/use-user";
 
 export function UserNav() {
-    const { data: session } = useSession();
+    const { session } = useUser();
+    const router = useRouter();
+
+    const handleSignOut = async () => {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+        router.push('/login');
+    };
 
     if (!session?.user) return null;
 
@@ -46,7 +55,7 @@ export function UserNav() {
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })}>
+                <DropdownMenuItem onClick={handleSignOut}>
                     Sign out
                     <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
                 </DropdownMenuItem>

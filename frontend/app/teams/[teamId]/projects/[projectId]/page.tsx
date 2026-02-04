@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, use } from 'react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -26,7 +26,7 @@ interface Project {
 
 export default function ProjectDashboardPage({ params }: { params: Promise<{ teamId: string; projectId: string }> }) {
     const { teamId, projectId } = use(params);
-    const { data: session, status } = useSession();
+    const { session, status } = useUser();
 
     const [project, setProject] = useState<Project | null>(null);
     const [teamName, setTeamName] = useState<string>('');

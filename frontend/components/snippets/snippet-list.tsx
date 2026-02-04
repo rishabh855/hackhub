@@ -4,14 +4,14 @@ import { useEffect, useState } from 'react';
 import { getProjectSnippets } from '@/lib/api';
 import { SnippetDialog } from './snippet-dialog';
 import { SnippetCard } from './snippet-card';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 import { Loader2 } from 'lucide-react';
 
 import { useRef } from 'react';
 import { getProjectMembership } from '@/lib/api';
 
 export function SnippetList({ projectId }: { projectId: string }) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [snippets, setSnippets] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [role, setRole] = useState<string | null>(null);

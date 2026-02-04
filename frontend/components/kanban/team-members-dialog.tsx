@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { getProjectMembers, inviteProjectMember, updateMemberRole, removeMember } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 
 interface Member {
     userId: string;
@@ -38,7 +38,7 @@ interface Props {
 }
 
 export function TeamMembersDialog({ projectId }: Props) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const { toast } = useToast();
     const [members, setMembers] = useState<Member[]>([]);
     const [open, setOpen] = useState(false);

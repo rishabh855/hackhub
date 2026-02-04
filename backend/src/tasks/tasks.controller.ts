@@ -3,8 +3,10 @@ import { TasksService } from './tasks.service';
 import { ProjectRoles } from '../auth/project-roles.decorator';
 import { ProjectRolesGuard } from '../auth/project-roles.guard';
 import { ProjectRole } from '../projects/project-role.enum';
+import { SupabaseAuthGuard } from '../auth/supabase.guard';
 
 @Controller('tasks')
+@UseGuards(SupabaseAuthGuard)
 export class TasksController {
     constructor(private readonly tasksService: TasksService) { }
 

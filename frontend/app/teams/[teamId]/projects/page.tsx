@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 import { getTeamProjects, getUserTeams } from '@/lib/api';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ interface Project {
 
 export default function ProjectsPage({ params }: { params: Promise<{ teamId: string }> }) {
     const { teamId } = use(params);
-    const { data: session, status } = useSession();
+    const { session, status } = useUser();
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [teamName, setTeamName] = useState<string>('');

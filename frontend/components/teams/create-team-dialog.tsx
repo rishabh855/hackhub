@@ -13,14 +13,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createTeam } from '@/lib/api';
 import { Plus } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 
 interface CreateTeamDialogProps {
     onTeamCreated: () => void;
 }
 
 export function CreateTeamDialog({ onTeamCreated }: CreateTeamDialogProps) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [loading, setLoading] = useState(false);

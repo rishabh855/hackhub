@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 import { updateTask, getProjectMembers } from "@/lib/api";
 import { useToast } from "@/components/ui/use-toast";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/hooks/use-user";
 
 type Task = {
     id: string;
@@ -45,7 +45,7 @@ interface TaskDetailViewProps {
 }
 
 export function TaskDetailView({ task, projectId, role, onUpdate }: TaskDetailViewProps) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const { toast } = useToast();
 
     // Local state for inputs

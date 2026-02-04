@@ -3,17 +3,20 @@ import { SnippetsService } from './snippets.service';
 import { ProjectRoles } from '../auth/project-roles.decorator';
 import { ProjectRolesGuard } from '../auth/project-roles.guard';
 import { ProjectRole } from '../projects/project-role.enum';
+import { SupabaseAuthGuard } from '../auth/supabase.guard';
+import { User } from '../auth/user.decorator';
 
 @Controller('snippets')
+@UseGuards(SupabaseAuthGuard)
 export class SnippetsController {
     constructor(private readonly snippetsService: SnippetsService) { }
 
     @Post()
     @ProjectRoles(ProjectRole.EDITOR)
     @UseGuards(ProjectRolesGuard)
-    create(@Body() body: { userId: string; projectId: string; title: string; code: string; language: string; description?: string }) {
-        const { userId, projectId, ...data } = body;
-        return this.snippetsService.createSnippet(userId, projectId, data);
+    create(@User() user: any, @Body() body: { projectId: string; title: string; code: string; language: string; description?: string }) {
+        const { projectId, ...data } = body;
+        return this.snippetsService.createSnippet(user.id, projectId, data);
     }
 
     @Get()

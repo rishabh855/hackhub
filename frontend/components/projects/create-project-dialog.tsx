@@ -13,7 +13,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { createProject } from '@/lib/api';
 import { Plus } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 
 interface CreateProjectDialogProps {
     teamId: string;
@@ -21,7 +21,7 @@ interface CreateProjectDialogProps {
 }
 
 export function CreateProjectDialog({ teamId, onProjectCreated }: CreateProjectDialogProps) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [open, setOpen] = useState(false);
     const [name, setName] = useState('');
     const [description, setDescription] = useState('');

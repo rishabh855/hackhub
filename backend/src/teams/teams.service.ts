@@ -8,6 +8,14 @@ export class TeamsService {
     async createTeam(userId: string, name: string) {
         console.log(`Creating team '${name}' for user '${userId}'`);
         try {
+            const userExists = await this.prisma.user.findUnique({ where: { id: userId } });
+            console.log(`User ${userId} exists in DB: ${!!userExists}`);
+
+            if (!userExists) {
+                // Fallback: This shouldn't happen if Guard works, but just in case
+                throw new NotFoundException(`User ${userId} does not exist in the database.`);
+            }
+
             // Transactional: Create Team -> Add Creator as Owner
             return await this.prisma.$transaction(async (tx) => {
                 console.log('Starting transaction...');

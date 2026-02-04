@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, MessageSquare, MoreVertical, Pin, Bot } from 'lucide-react';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 import { askAI, getProjectMembership } from '@/lib/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -35,7 +35,7 @@ interface Message {
 let socket: Socket;
 
 export function ChatWindow({ teamId, projectId }: Props) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [messages, setMessages] = useState<Message[]>([]);
     const [newMessage, setNewMessage] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);

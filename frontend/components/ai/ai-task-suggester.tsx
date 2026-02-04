@@ -15,7 +15,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/use-user';
 
 interface AiTaskSuggesterProps {
     projectId: string;
@@ -23,7 +23,7 @@ interface AiTaskSuggesterProps {
 }
 
 export function AiTaskSuggester({ projectId, onTasksCreated }: AiTaskSuggesterProps) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const [open, setOpen] = useState(false);
     const [loading, setLoading] = useState(false);
     const [description, setDescription] = useState('');

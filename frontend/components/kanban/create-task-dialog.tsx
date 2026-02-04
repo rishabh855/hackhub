@@ -30,10 +30,10 @@ interface Props {
     defaultTitle?: string;
 }
 
-import { useSession } from "next-auth/react";
+import { useUser } from "@/hooks/use-user";
 
 export function CreateTaskDialog({ projectId, teamId, trigger, open, onOpenChange, onTaskCreated, defaultTitle = '' }: Props) {
-    const { data: session } = useSession();
+    const { session } = useUser();
     const { toast } = useToast();
     const [internalOpen, setInternalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
