@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
@@ -32,21 +32,15 @@ export default function ProjectDashboardPage({ params }: { params: Promise<{ tea
     const [teamName, setTeamName] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        if (status === 'authenticated') {
-            loadData();
-        } else if (status === 'unauthenticated') {
-            setLoading(false);
-        }
-    }, [status, session, projectId, teamId]);
+    const loadData = useCallback(async () => {
+        if (!session?.user?.id) return;
 
-    const loadData = async () => {
         try {
             // Parallel fetch for speed
             const [projData, teamsData] = await Promise.all([
                 getProject(projectId),
                 // @ts-ignore
-                getUserTeams(session?.user?.id as string)
+                getUserTeams(session.user.id as string)
             ]);
 
             setProject(projData);
@@ -61,7 +55,15 @@ export default function ProjectDashboardPage({ params }: { params: Promise<{ tea
         } finally {
             setLoading(false);
         }
-    };
+    }, [projectId, teamId, session?.user?.id]);
+
+    useEffect(() => {
+        if (status === 'authenticated') {
+            loadData();
+        } else if (status === 'unauthenticated') {
+            setLoading(false);
+        }
+    }, [status, loadData]);
 
     if (status === 'loading' || loading) {
         return (

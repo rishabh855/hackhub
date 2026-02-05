@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
 import { getUserTeams } from '@/lib/api';
 import { CreateTeamDialog } from '@/components/teams/create-team-dialog';
@@ -20,7 +20,7 @@ export default function TeamsPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchTeams = async () => {
+    const fetchTeams = useCallback(async () => {
         // @ts-ignore
         if (session?.user?.id) {
             try {
@@ -33,7 +33,7 @@ export default function TeamsPage() {
                 setLoading(false);
             }
         }
-    };
+    }, [session?.user?.id]);
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -42,7 +42,7 @@ export default function TeamsPage() {
             // Handle redirect if needed, or let middleware handle it
             setLoading(false);
         }
-    }, [session, status]);
+    }, [status, fetchTeams]);
 
     if (status === 'loading' || loading) {
         return (

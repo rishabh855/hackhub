@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
 import { getTeamProjects, getUserTeams } from '@/lib/api';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
@@ -26,16 +26,16 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
     const [teamName, setTeamName] = useState<string>('');
     const [loading, setLoading] = useState(true);
 
-    const fetchProjects = async () => {
+    const fetchProjects = useCallback(async () => {
         try {
             const data = await getTeamProjects(teamId);
             setProjects(data);
         } catch (error) {
             console.error("Failed to fetch projects", error);
         }
-    };
+    }, [teamId]);
 
-    const fetchTeamInfo = async () => {
+    const fetchTeamInfo = useCallback(async () => {
         // @ts-ignore
         if (session?.user?.id) {
             try {
@@ -48,12 +48,12 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 console.error(err);
             }
         }
-    }
+    }, [session?.user?.id, teamId]);
 
-    const loadAll = async () => {
+    const loadAll = useCallback(async () => {
         await Promise.all([fetchProjects(), fetchTeamInfo()]);
         setLoading(false);
-    }
+    }, [fetchProjects, fetchTeamInfo]);
 
     useEffect(() => {
         if (status === 'authenticated') {
@@ -61,7 +61,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
         } else if (status === 'unauthenticated') {
             setLoading(false);
         }
-    }, [session, status, teamId]);
+    }, [status, loadAll]);
 
     if (status === 'loading' || loading) {
         return (
