@@ -12,8 +12,16 @@ export class ProjectsController {
     constructor(private readonly projectsService: ProjectsService) { }
 
     @Post()
-    create(@User() user: any, @Body() body: { teamId: string; name: string; description?: string }) {
-        return this.projectsService.createProject(body.teamId, body.name, user.id, body.description);
+    async create(@User() user: any, @Body() body: { teamId: string; name: string; description?: string }) {
+        try {
+            console.log('[ProjectsController] Creating project:', { teamId: body.teamId, name: body.name, userId: user.id });
+            const project = await this.projectsService.createProject(body.teamId, body.name, user.id, body.description);
+            console.log('[ProjectsController] Project created successfully:', project.id);
+            return project;
+        } catch (error) {
+            console.error('[ProjectsController] Error creating project:', error);
+            throw error;
+        }
     }
 
     @Get()

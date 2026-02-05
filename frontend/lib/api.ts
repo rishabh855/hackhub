@@ -43,7 +43,11 @@ export async function createProject(teamId: string, name: string, userId: string
         headers,
         body: JSON.stringify({ teamId, name, description }), // userId now from auth token
     });
-    if (!res.ok) throw new Error('Failed to create project');
+    if (!res.ok) {
+        const text = await res.text();
+        console.error('Failed to create project:', res.status, text);
+        throw new Error(`Failed to create project: ${res.status} ${text}`);
+    }
     return res.json();
 }
 

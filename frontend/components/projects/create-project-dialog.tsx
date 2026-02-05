@@ -40,7 +40,10 @@ export function CreateProjectDialog({ teamId, onProjectCreated }: CreateProjectD
             setDescription('');
             onProjectCreated();
         } catch (error) {
-            console.error(error);
+            console.error('Failed to create project:', error);
+            // @ts-ignore
+            const errorMessage = error?.message || 'Failed to create project';
+            alert(`Error: ${errorMessage}`);
         } finally {
             setLoading(false);
         }

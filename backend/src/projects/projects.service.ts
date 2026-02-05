@@ -20,7 +20,9 @@ export class ProjectsService {
     }
 
     async createProject(teamId: string, name: string, userId: string, description?: string) {
+        console.log('[ProjectsService] Creating project:', { teamId, name, userId, description });
         return this.prisma.$transaction(async (prisma) => {
+            console.log('[ProjectsService] Creating project record...');
             const project = await prisma.project.create({
                 data: {
                     name,
@@ -28,7 +30,9 @@ export class ProjectsService {
                     teamId,
                 },
             });
+            console.log('[ProjectsService] Project created:', project.id);
 
+            console.log('[ProjectsService] Creating project member...');
             await prisma.projectMember.create({
                 data: {
                     userId,
@@ -36,6 +40,7 @@ export class ProjectsService {
                     role: 'OWNER',
                 },
             });
+            console.log('[ProjectsService] Project member created');
 
             return project;
         });
