@@ -57,7 +57,8 @@ export function ChatWindow({ teamId, projectId }: Props) {
 
     useEffect(() => {
         // Initialize Socket
-        socket = io('http://localhost:4000');
+        const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        socket = io(SOCKET_URL);
 
         socket.on('connect', () => {
             console.log('Connected to chat server');
