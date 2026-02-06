@@ -57,7 +57,10 @@ export class ChatGateway {
             return message;
         } catch (error) {
             console.error('[ChatGateway] Error saving message:', error);
-            throw error;
+        } catch (error) {
+            console.error('[ChatGateway] Error saving message:', error);
+            // Return error to client via Acknowledgement
+            return { error: error.message || 'Unknown error' };
         }
     }
 

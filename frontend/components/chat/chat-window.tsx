@@ -147,7 +147,14 @@ export function ChatWindow({ teamId, projectId }: Props) {
             projectId, // Pass projectId if exists
         };
 
-        socket.emit('sendMessage', payload);
+        socket.emit('sendMessage', payload, (response: any) => {
+            if (response?.error) {
+                console.error('[ChatWindow] Failed to send message:', response.error);
+                alert(`Failed to send message: ${response.error}`);
+            } else {
+                console.log('[ChatWindow] Message sent callback:', response);
+            }
+        });
         setNewMessage('');
     };
 
