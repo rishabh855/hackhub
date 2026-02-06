@@ -36,8 +36,20 @@ export class ProjectsController {
     }
 
     @Get(':id/membership')
-    getMembership(@Param('id') projectId: string, @User() user: any) {
-        return this.projectsService.getMembership(projectId, user.id);
+    async getMembership(@Param('id') projectId: string, @User() user: any) {
+        try {
+            console.log(`[ProjectsController] Getting membership for project ${projectId} and user ${user?.id}`);
+            if (!user) {
+                console.error('[ProjectsController] User is missing in getMembership');
+                // This might happen if Guard fails to attach user but allows request? Unlikely with SupabaseAuthGuard.
+            }
+            const result = await this.projectsService.getMembership(projectId, user.id);
+            console.log('[ProjectsController] Membership result:', result);
+            return result;
+        } catch (error) {
+            console.error('[ProjectsController] Error getting membership:', error);
+            throw error;
+        }
     }
 
     @Get(':id/members')
