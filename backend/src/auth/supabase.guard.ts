@@ -108,7 +108,8 @@ export class SupabaseAuthGuard implements CanActivate {
             return true;
         } catch (err) {
             console.error('Auth Guard Error:', err);
-            throw new UnauthorizedException('Authentication failed');
+            // @ts-ignore
+            throw new UnauthorizedException(`Authentication failed: ${err.message || err}`);
         }
     }
 }
