@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
@@ -13,10 +13,12 @@ export class ProjectsService {
     }
 
     async getProject(id: string) {
-        return this.prisma.project.findUnique({
+        const project = await this.prisma.project.findUnique({
             where: { id },
             include: { team: true }
         });
+        if (!project) throw new NotFoundException('Project not found');
+        return project;
     }
 
     async createProject(teamId: string, name: string, userId: string, description?: string) {
@@ -50,6 +52,21 @@ export class ProjectsService {
         return this.prisma.project.findMany({
             where: { teamId },
             orderBy: { createdAt: 'desc' },
+            include: {
+                members: {
+                    where: { role: 'OWNER' },
+                    take: 1,
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                            }
+                        }
+                    }
+                }
+            }
         });
     }
 
@@ -81,7 +98,7 @@ export class ProjectsService {
                     id: `implicit-${teamMember.id}`,
                     userId,
                     projectId,
-                    role: teamMember.role === 'OWNER' ? 'OWNER' : 'EDITOR',
+                    role: teamMember.role === 'OWNER' ? 'OWNER' : 'MEMBER',
                 };
             }
         }
@@ -123,8 +140,31 @@ export class ProjectsService {
     }
 
     async removeMember(projectId: string, userId: string) {
-        return this.prisma.projectMember.deleteMany({
-            where: { projectId, userId }
+        // Check if removing the last owner
+        // Get all members first (or count owners)
+        const memberToRemove = await this.prisma.projectMember.findUnique({
+            where: { userId_projectId: { userId, projectId } }
+        });
+
+        if (!memberToRemove) {
+            // If not found, maybe implicit? Cannot remove implicit members here directly? 
+            // Or maybe just let it fail silent or throw.
+            // Implicit members are managed at Team level.
+            throw new Error('Member not found or is implicit');
+        }
+
+        if (memberToRemove.role === 'OWNER') {
+            const ownersCount = await this.prisma.projectMember.count({
+                where: { projectId, role: 'OWNER' }
+            });
+
+            if (ownersCount <= 1) {
+                throw new Error('Cannot remove the last owner of the project');
+            }
+        }
+
+        return this.prisma.projectMember.delete({
+            where: { userId_projectId: { userId, projectId } }
         });
     }
 
@@ -186,27 +226,21 @@ export class ProjectsService {
 
             let ideal: number;
             if (totalDuration <= 0) {
-                // Single day project: Ideal is totalTasks (start) -> 0 (end of day? strictly manual)
-                // Or just flat totalTasks? 
-                // If duration is 0, we can't really draw a line. 
-                // But typically if it's 1 day, we start with Total and end with 0? 
-                // Let's just return Total tasks for the single point to show what needs to be done.
                 ideal = totalTasks;
             } else {
                 ideal = Math.max(0, totalTasks - (totalTasks * (elapsed / totalDuration)));
             }
 
             // Actual: Tasks remaining
-            // Count tasks where (createdAt <= date) AND (completedAt is NULL OR completedAt > date)
             const actual = tasks.filter(t => {
                 const created = new Date(t.createdAt);
                 created.setHours(0, 0, 0, 0);
-                if (created > date) return false; // Not created yet
+                if (created > date) return false;
 
-                if (!t.completedAt) return true; // Not completed yet
+                if (!t.completedAt) return true;
                 const completed = new Date(t.completedAt);
                 completed.setHours(0, 0, 0, 0);
-                return completed > date; // Completed AFTER this date
+                return completed > date;
             }).length;
 
             return {

@@ -4,8 +4,10 @@ import { useEffect, useState, use, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
 import { getTeamProjects, getUserTeams } from '@/lib/api';
 import { CreateProjectDialog } from '@/components/projects/create-project-dialog';
+import { InviteMembersModal } from '@/components/projects/invite-members-modal';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Folder } from 'lucide-react';
+import { ArrowLeft, Folder, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,6 +18,12 @@ interface Project {
     description?: string;
     updatedAt: string;
     createdAt: string;
+    members: {
+        user: {
+            name: string;
+            email: string;
+        }
+    }[];
 }
 
 export default function ProjectsPage({ params }: { params: Promise<{ teamId: string }> }) {
@@ -24,6 +32,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
 
     const [projects, setProjects] = useState<Project[]>([]);
     const [teamName, setTeamName] = useState<string>('');
+    const [isTeamOwner, setIsTeamOwner] = useState(false);
     const [loading, setLoading] = useState(true);
 
     const fetchProjects = useCallback(async () => {
@@ -42,8 +51,16 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 // @ts-ignore
                 const teams = await getUserTeams(session.user.id);
                 // @ts-ignore
-                const currentTeam = teams.find((t: { id: string; name: string }) => t.id === teamId);
-                if (currentTeam) setTeamName(currentTeam.name);
+                const currentTeam = teams.find((t: any) => t.id === teamId);
+                if (currentTeam) {
+                    setTeamName(currentTeam.name);
+                    // Check ownership
+                    // @ts-ignore
+                    const member = currentTeam.members.find((m: any) => m.userId === session.user.id);
+                    if (member && member.role === 'OWNER') {
+                        setIsTeamOwner(true);
+                    }
+                }
             } catch (err) {
                 console.error(err);
             }
@@ -92,7 +109,16 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
 
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Projects</h1>
-                <CreateProjectDialog teamId={teamId} onProjectCreated={fetchProjects} />
+                <div className="flex items-center gap-2">
+                    {isTeamOwner && (
+                        <InviteMembersModal teamId={teamId}>
+                            <Button variant="outline">
+                                <Plus className="w-4 h-4 mr-2" /> Invite Members
+                            </Button>
+                        </InviteMembersModal>
+                    )}
+                    <CreateProjectDialog teamId={teamId} onProjectCreated={fetchProjects} />
+                </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -109,8 +135,18 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                                 <div className="text-sm text-muted-foreground line-clamp-2 min-h-[2.5rem]">
                                     {project.description || 'No description provided.'}
                                 </div>
-                                <div className="text-xs text-muted-foreground/60 mt-4">
-                                    Updated {project.updatedAt ? formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true }) : 'recently'}
+                                <div className="flex items-center justify-between mt-4">
+                                    <div className="text-xs text-muted-foreground/60">
+                                        Updated {project.updatedAt ? formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true }) : 'recently'}
+                                    </div>
+                                    <div className="text-xs text-muted-foreground font-medium">
+                                        Created by {(() => {
+                                            const user = project.members?.[0]?.user;
+                                            if (!user) return 'Unknown';
+                                            const displayName = user.name || user.email.split('@')[0];
+                                            return displayName.split(' ')[0]; // First name
+                                        })()}
+                                    </div>
                                 </div>
                             </CardContent>
                         </Card>
@@ -120,10 +156,12 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 {projects.length === 0 && (
                     <div className="col-span-full py-16 text-center rounded-xl border-dashed border-2 bg-muted/5">
                         <h3 className="text-lg font-medium text-foreground">No projects yet</h3>
-                        <p className="text-muted-foreground mb-4">Launch your first project in this team.</p>
+                        <p className="text-muted-foreground mb-4">Create your first project to get started.</p>
                     </div>
                 )}
             </div>
+
+
         </div>
     );
 }

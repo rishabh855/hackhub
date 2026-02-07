@@ -12,7 +12,7 @@ export class SnippetsController {
     constructor(private readonly snippetsService: SnippetsService) { }
 
     @Post()
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     create(@User() user: any, @Body() body: { projectId: string; title: string; code: string; language: string; description?: string }) {
         const { projectId, ...data } = body;
@@ -25,14 +25,14 @@ export class SnippetsController {
     }
 
     @Patch(':id')
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     update(@Param('id') id: string, @Body() data: any) {
         return this.snippetsService.updateSnippet(id, data);
     }
 
     @Delete(':id')
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     remove(@Param('id') id: string) {
         return this.snippetsService.deleteSnippet(id);

@@ -11,7 +11,7 @@ export class TasksController {
     constructor(private readonly tasksService: TasksService) { }
 
     @Post()
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     create(@Body() body: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[]; isBlocked?: boolean; blockedReason?: string }) {
         return this.tasksService.createTask(body);
@@ -23,14 +23,14 @@ export class TasksController {
     }
 
     @Patch(':id')
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     update(@Param('id') id: string, @Body() body: any) {
         return this.tasksService.updateTask(id, body);
     }
 
     @Delete(':id')
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     delete(@Param('id') id: string) {
         // Warning: guard needs projectId in query/body!

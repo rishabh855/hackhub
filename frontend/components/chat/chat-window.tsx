@@ -32,8 +32,6 @@ interface Message {
     isPinned?: boolean;
 }
 
-let socket: Socket;
-
 export function ChatWindow({ teamId, projectId }: Props) {
     const { session } = useUser();
     const [messages, setMessages] = useState<Message[]>([]);
@@ -46,6 +44,8 @@ export function ChatWindow({ teamId, projectId }: Props) {
     const [taskDialogOpen, setTaskDialogOpen] = useState(false);
     const [taskDialogDefaultTitle, setTaskDialogDefaultTitle] = useState('');
 
+    const socketRef = useRef<Socket | null>(null);
+
     useEffect(() => {
         if (session?.user && projectId) {
             // @ts-ignore
@@ -56,22 +56,45 @@ export function ChatWindow({ teamId, projectId }: Props) {
     }, [session, projectId]);
 
     useEffect(() => {
+        if (!session?.access_token) return;
+
         // Initialize Socket
         const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
-        socket = io(SOCKET_URL);
+
+        // Pass token in auth
+        socketRef.current = io(SOCKET_URL, {
+            auth: {
+                token: session.access_token
+            },
+            transports: ['websocket'], // Force WebSocket to avoid polling 400 errors
+            reconnectionAttempts: 5,
+        });
+
+        const socket = socketRef.current;
 
         socket.on('connect', () => {
-            console.log('Connected to chat server');
+            console.log('[ChatWindow] Connected to chat server', socket.id);
             setIsConnected(true);
             if (projectId) {
+                console.log('[ChatWindow] Joining project room:', projectId);
                 socket.emit('joinProject', projectId);
             } else {
+                console.log('[ChatWindow] Joining team room:', teamId);
                 socket.emit('joinTeam', teamId);
             }
         });
 
+        socket.on('connect_error', (err) => {
+            console.error('[ChatWindow] Socket connection error:', err.message);
+            setIsConnected(false);
+        });
+
         socket.on('receiveMessage', (message: Message) => {
-            setMessages((prev) => [...prev, message]);
+            console.log('[ChatWindow] Received message:', message);
+            setMessages((prev) => {
+                if (prev.some(m => m.id === message.id)) return prev;
+                return [...prev, message];
+            });
         });
 
         socket.on('messagePinned', (updatedMessage: Message) => {
@@ -82,15 +105,15 @@ export function ChatWindow({ teamId, projectId }: Props) {
         // If projectId is present, we ask for project history, otherwise team history
         const historyPayload = projectId ? { teamId, projectId } : teamId;
         socket.emit('getHistory', historyPayload, (history: Message[]) => {
+            console.log('[ChatWindow] Loaded history:', history?.length);
             if (Array.isArray(history)) setMessages(history);
         });
 
         return () => {
+            console.log('[ChatWindow] Disconnecting socket');
             socket.disconnect();
         };
-    }, [teamId, projectId]);
-
-    // ...
+    }, [teamId, projectId, session?.access_token]);
 
     const handleSendMessage = async () => {
         if (!newMessage.trim() || !session?.user) return;
@@ -147,15 +170,17 @@ export function ChatWindow({ teamId, projectId }: Props) {
             projectId, // Pass projectId if exists
         };
 
-        socket.emit('sendMessage', payload, (response: any) => {
-            if (response?.error) {
-                console.error('[ChatWindow] Failed to send message:', response.error);
-                alert(`Failed to send message: ${response.error}`);
-            } else {
-                console.log('[ChatWindow] Message sent callback:', response);
-            }
-        });
-        setNewMessage('');
+        if (socketRef.current) {
+            socketRef.current.emit('sendMessage', payload, (response: any) => {
+                if (response?.error) {
+                    console.error('[ChatWindow] Failed to send message:', response.error);
+                    alert(`Failed to send message: ${response.error}`);
+                } else {
+                    console.log('[ChatWindow] Message sent callback:', response);
+                }
+            });
+            setNewMessage('');
+        }
     };
 
     const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -166,7 +191,7 @@ export function ChatWindow({ teamId, projectId }: Props) {
 
     const handlePinMessage = (messageId: string, isPinned: boolean) => {
         if (role === 'VIEWER') return;
-        socket.emit('pinMessage', { teamId, messageId, isPinned });
+        socketRef.current?.emit('pinMessage', { teamId, messageId, isPinned });
     };
 
     const handleCreateTaskFromMessage = (content: string) => {

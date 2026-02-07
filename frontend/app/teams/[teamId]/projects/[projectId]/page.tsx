@@ -3,7 +3,7 @@
 import { useState, useEffect, use, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 import { getProject, getUserTeams } from '@/lib/api';
@@ -17,6 +17,8 @@ import { DecisionList } from '@/components/decisions/decision-list';
 import { ProgressTab } from '@/components/analytics/progress-tab';
 import { SubmissionTab } from '@/components/submissions/submission-tab';
 import { Skeleton } from '@/components/ui/skeleton';
+import { InviteMembersModal } from '@/components/projects/invite-members-modal';
+import { Button } from '@/components/ui/button';
 
 interface Project {
     id: string;
@@ -30,6 +32,7 @@ export default function ProjectDashboardPage({ params }: { params: Promise<{ tea
 
     const [project, setProject] = useState<Project | null>(null);
     const [teamName, setTeamName] = useState<string>('');
+    const [isTeamOwner, setIsTeamOwner] = useState(false);
     const [loading, setLoading] = useState(true);
 
     const loadData = useCallback(async () => {
@@ -45,10 +48,20 @@ export default function ProjectDashboardPage({ params }: { params: Promise<{ tea
 
             setProject(projData);
 
-            // Find team name
+            // Find team name and check ownership
             // @ts-ignore
             const team = teamsData.find((t: any) => t.id === teamId);
-            if (team) setTeamName(team.name);
+            if (team) {
+                setTeamName(team.name);
+                // Check if current user is owner
+                // members array is included in getUserTeams response (TeamsService.getUserTeams uses include: { members: true })
+                // user.id is session.user.id
+                // @ts-ignore
+                const member = team.members.find((m: any) => m.userId === session.user.id);
+                if (member && member.role === 'OWNER') {
+                    setIsTeamOwner(true);
+                }
+            }
 
         } catch (err) {
             console.error("Failed to load dashboard data", err);
@@ -97,7 +110,14 @@ export default function ProjectDashboardPage({ params }: { params: Promise<{ tea
                         <p className="text-muted-foreground mt-1">{project.description}</p>
                     )}
                 </div>
-                <div className="shrink-0">
+                <div className="shrink-0 flex items-center gap-2">
+                    {isTeamOwner && (
+                        <InviteMembersModal teamId={teamId}>
+                            <Button variant="outline" size="sm">
+                                <Plus className="w-4 h-4 mr-2" /> Invite Members
+                            </Button>
+                        </InviteMembersModal>
+                    )}
                     <AiProjectSummary projectId={project.id} />
                 </div>
             </div>

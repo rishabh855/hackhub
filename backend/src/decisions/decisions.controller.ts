@@ -12,7 +12,7 @@ export class DecisionsController {
     constructor(private readonly decisionsService: DecisionsService) { }
 
     @Post('projects/:projectId/decisions')
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     async create(
         @Param('projectId') projectId: string,
         @User() user: any,
@@ -22,7 +22,7 @@ export class DecisionsController {
     }
 
     @Get('projects/:projectId/decisions')
-    @ProjectRoles(ProjectRole.VIEWER) // Viewers can read
+    @ProjectRoles(ProjectRole.MEMBER) // Viewers can read
     async findAll(@Param('projectId') projectId: string) {
         return this.decisionsService.findAll(projectId);
     }
@@ -32,7 +32,7 @@ export class DecisionsController {
     // ProjectRolesGuard needs a projectId. 
     // If we only have decisionId, we might need a custom lookup or pass projectId in query.
     // Let's require projectId in query for simplicity: ?projectId=...
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     async addNote(
         @Param('decisionId') decisionId: string,
         @User() user: any,

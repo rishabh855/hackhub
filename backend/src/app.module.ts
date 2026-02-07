@@ -12,6 +12,7 @@ import { SnippetsModule } from './snippets/snippets.module';
 import { AiModule } from './ai/ai.module';
 import { DecisionsModule } from './decisions/decisions.module';
 import { AuthModule } from './auth/auth.module';
+import { InvitationsModule } from './invitations/invitations.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { AuthModule } from './auth/auth.module';
     AiModule,
     DecisionsModule,
     AuthModule,
+    InvitationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

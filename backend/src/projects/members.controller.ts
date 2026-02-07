@@ -10,7 +10,7 @@ export class MembersController {
     constructor(private readonly membersService: MembersService) { }
 
     @Get()
-    @Roles(ProjectRole.OWNER, ProjectRole.EDITOR, ProjectRole.VIEWER)
+    @Roles(ProjectRole.OWNER, ProjectRole.MEMBER)
     findAll(@Param('id') projectId: string) {
         return this.membersService.getProjectMembers(projectId);
     }

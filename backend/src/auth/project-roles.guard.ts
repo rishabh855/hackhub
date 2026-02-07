@@ -77,8 +77,8 @@ export class ProjectRolesGuard implements CanActivate {
                 if (teamMember) {
                     // Map Team Role to Project Role equivalent
                     // Team OWNER -> Project OWNER
-                    // Team MEMBER -> Project EDITOR (Team members are collaborators)
-                    userRole = teamMember.role === 'OWNER' ? ProjectRole.OWNER : ProjectRole.EDITOR;
+                    // Team MEMBER -> Project MEMBER
+                    userRole = teamMember.role === 'OWNER' ? ProjectRole.OWNER : ProjectRole.MEMBER;
                 }
             }
         }
@@ -88,11 +88,10 @@ export class ProjectRolesGuard implements CanActivate {
         }
 
         // Hierarchy check
-        // OWNER > EDITOR > VIEWER
+        // OWNER > MEMBER
         const roleLevel = {
-            [ProjectRole.OWNER]: 3,
-            [ProjectRole.EDITOR]: 2,
-            [ProjectRole.VIEWER]: 1,
+            [ProjectRole.OWNER]: 2,
+            [ProjectRole.MEMBER]: 1,
         };
 
         const userLevel = roleLevel[userRole] || 0;

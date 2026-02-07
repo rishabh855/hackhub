@@ -5,9 +5,11 @@ import { useUser } from '@/hooks/use-user';
 import { getUserTeams } from '@/lib/api';
 import { CreateTeamDialog } from '@/components/teams/create-team-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users } from 'lucide-react';
+import { Users, QrCode } from 'lucide-react';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
+import { JoinTeamDialog } from '@/components/projects/join-project-dialog';
+import { Button } from '@/components/ui/button';
 
 interface Team {
     id: string;
@@ -93,6 +95,14 @@ export default function TeamsPage() {
                     </div>
                 )}
             </div>
-        </div>
+
+            <div className="fixed bottom-8 right-8">
+                <JoinTeamDialog onJoinSuccess={fetchTeams}>
+                    <Button size="lg" className="rounded-full shadow-lg h-14 w-14 p-0">
+                        <QrCode className="w-6 h-6" />
+                    </Button>
+                </JoinTeamDialog>
+            </div>
+        </div >
     );
 }

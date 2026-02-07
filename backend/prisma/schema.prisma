@@ -34,6 +34,7 @@ model User {
   projectMembers ProjectMember[]
   decisions     Decision[]
   decisionNotes DecisionNote[]
+  sentInvitations TeamInvitation[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -84,6 +85,7 @@ model Team {
   members     TeamMember[]
   projects    Project[]
   messages    Message[]
+  invitations TeamInvitation[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -120,6 +122,7 @@ model Project {
   messages    Message[]
   decisions   Decision[]
 
+
   submissionGithub      String?
   submissionDemo        String?
   submissionPPT         String?
@@ -131,12 +134,33 @@ model ProjectMember {
   id        String   @id @default(cuid())
   userId    String
   projectId String
-  role      String   @default("VIEWER") // OWNER, EDITOR, VIEWER
+  role      String   @default("MEMBER") // OWNER, MEMBER
   
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@unique([userId, projectId])
+}
+
+model TeamInvitation {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  code      String?  @unique // For Team Code (HACK-7F2A)
+  email     String?  // Optional: if specific to an email
+  teamId    String
+  inviterId String
+  role      String   @default("MEMBER") 
+  status    String   @default("PENDING") // PENDING, USED, EXPIRED
+  
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team      Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  inviter   User     @relation(fields: [inviterId], references: [id])
+
+  @@index([teamId])
+  @@index([email])
 }
 
 model Task {

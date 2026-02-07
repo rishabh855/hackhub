@@ -84,7 +84,7 @@ export class ProjectsController {
     }
 
     @Patch(':id')
-    @ProjectRoles(ProjectRole.EDITOR)
+    @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)
     update(@Param('id') id: string, @Body() body: any) {
         return this.projectsService.updateProject(id, body);

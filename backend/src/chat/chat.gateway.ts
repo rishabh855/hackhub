@@ -8,16 +8,42 @@ import {
 import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 
+import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
+import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from '../prisma.service';
+
 @WebSocketGateway({
     cors: {
         origin: '*', // For development
     },
 })
-export class ChatGateway {
+export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
-    constructor(private readonly chatService: ChatService) { }
+    constructor(
+        private readonly chatService: ChatService,
+        private readonly jwtService: JwtService,
+        private readonly prisma: PrismaService
+    ) { }
+
+    async handleConnection(client: Socket) {
+        try {
+            const token = client.handshake.auth.token || client.handshake.query.token;
+            if (!token) throw new Error('No token provided');
+
+            const payload = this.jwtService.verify(token);
+            client.data.user = payload;
+            console.log(`[ChatGateway] Client connected: ${client.id}, User: ${payload.sub || payload.userId || payload.email}`);
+        } catch (err) {
+            console.log(`[ChatGateway] Connection rejected: ${err.message}`);
+            client.disconnect();
+        }
+    }
+
+    handleDisconnect(client: Socket) {
+        console.log(`[ChatGateway] Client disconnected: ${client.id}`);
+    }
 
     @SubscribeMessage('joinTeam')
     handleJoinTeam(@MessageBody() teamId: string, @ConnectedSocket() client: Socket) {
@@ -27,9 +53,21 @@ export class ChatGateway {
     }
 
     @SubscribeMessage('joinProject')
-    handleJoinProject(@MessageBody() projectId: string, @ConnectedSocket() client: Socket) {
+    async handleJoinProject(@MessageBody() projectId: string, @ConnectedSocket() client: Socket) {
+        // Verify Membership
+        const userId = client.data.user?.sub || client.data.user?.userId;
+        if (!userId) {
+            return { error: 'Unauthorized' };
+        }
+
+        const isMember = await this.chatService.isProjectMember(userId, projectId);
+        if (!isMember) {
+            console.log(`[ChatGateway] Join refused for user ${userId} to project ${projectId}`);
+            return { error: 'Forbidden: Not a member' };
+        }
+
         client.join(projectId); // Join a specific room for the project
-        // console.log(`Client ${client.id} joined project ${projectId}`);
+        console.log(`[ChatGateway] Client ${client.id} joined project ${projectId}`);
         return { event: 'joinedProject', data: projectId };
     }
 

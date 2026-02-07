@@ -5,6 +5,28 @@ import { PrismaService } from '../prisma.service';
 export class ChatService {
     constructor(private prisma: PrismaService) { }
 
+    async isProjectMember(userId: string, projectId: string): Promise<boolean> {
+        // Check direct membership
+        const member = await this.prisma.projectMember.findUnique({
+            where: { userId_projectId: { userId, projectId } }
+        });
+        if (member) return true;
+
+        // Check implicit (Team Owner)
+        const project = await this.prisma.project.findUnique({
+            where: { id: projectId },
+            select: { teamId: true }
+        });
+
+        if (project) {
+            const teamMember = await this.prisma.teamMember.findUnique({
+                where: { userId_teamId: { userId, teamId: project.teamId } }
+            });
+            if (teamMember) return true;
+        }
+        return false;
+    }
+
     async saveMessage(teamId: string, senderId: string, content: string, projectId?: string) {
         console.log('[ChatService] Saving message:', { teamId, senderId, content, projectId });
         try {
@@ -30,10 +52,6 @@ export class ChatService {
         if (projectId) {
             whereClause.projectId = projectId;
         } else {
-            // If fetching Team chat, exclude project-specific messages?
-            // Or just show all? Usually project chat is separate.
-            // Let's explicitly filter for messages WITHOUT a projectId for the main team chat
-            // to avoid cluttering the general channel.
             whereClause.projectId = null;
         }
 
@@ -44,6 +62,7 @@ export class ChatService {
             take: 50,
         });
     }
+
     async pinMessage(messageId: string, isPinned: boolean) {
         return this.prisma.message.update({
             where: { id: messageId },

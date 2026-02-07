@@ -73,7 +73,7 @@ export function AiProjectSummary({ projectId }: Props) {
                         size="sm"
                         onClick={handleSummarize}
                         disabled={loading}
-                        className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50 mb-4 transition-all hover:scale-105 active:scale-95"
+                        className="gap-2 text-indigo-600 border-indigo-200 hover:bg-indigo-50 transition-all hover:scale-105 active:scale-95"
                     >
                         {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileText className="w-4 h-4" />}
                         {loading ? 'Analyzing Project...' : 'Generate AI Summary'}

@@ -13,7 +13,7 @@ export class MembersService {
         });
     }
 
-    async inviteMember(projectId: string, email: string, role: string = 'VIEWER') {
+    async inviteMember(projectId: string, email: string, role: string = 'MEMBER') {
         const user = await this.prisma.user.findUnique({ where: { email } });
         if (!user) {
             throw new NotFoundException('User with this email not found');
