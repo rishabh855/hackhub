@@ -4,7 +4,7 @@
 
 HackHub is a comprehensive project management and collaboration platform designed specifically for the fast-paced environment of hackathons. It unifies task management, real-time communication, decision tracking, and code snippet sharing into a single, cohesive interface, enabling teams to build better and faster together.
 
-![HackHub Hero](./hero-image-placeholder.png)
+
 
 ## 🚀 Key Features
 
