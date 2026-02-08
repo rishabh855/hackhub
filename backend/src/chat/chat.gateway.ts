@@ -9,7 +9,9 @@ import { Server, Socket } from 'socket.io';
 import { ChatService } from './chat.service';
 
 import { OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
-import { JwtService } from '@nestjs/jwt';
+// import { JwtService } from '@nestjs/jwt'; // Removed
+import { ConfigService } from '@nestjs/config';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { PrismaService } from '../prisma.service';
 
 @WebSocketGateway({
@@ -21,20 +23,39 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
+    private supabase: SupabaseClient;
+
     constructor(
         private readonly chatService: ChatService,
-        private readonly jwtService: JwtService,
+        private readonly configService: ConfigService,
         private readonly prisma: PrismaService
-    ) { }
+    ) {
+        this.supabase = createClient(
+            this.configService.get<string>('SUPABASE_URL') || '',
+            this.configService.get<string>('SUPABASE_KEY') || ''
+        );
+    }
 
     async handleConnection(client: Socket) {
         try {
             const token = client.handshake.auth.token || client.handshake.query.token;
             if (!token) throw new Error('No token provided');
 
-            const payload = this.jwtService.verify(token);
-            client.data.user = payload;
-            console.log(`[ChatGateway] Client connected: ${client.id}, User: ${payload.sub || payload.userId || payload.email}`);
+            // Verify with Supabase
+            const { data: { user }, error } = await this.supabase.auth.getUser(token);
+
+            if (error || !user) {
+                throw new Error('Invalid token');
+            }
+
+            // Attach user to socket
+            client.data.user = {
+                sub: user.id,
+                email: user.email,
+                userId: user.id
+            };
+
+            console.log(`[ChatGateway] Client connected: ${client.id}, User: ${user.email} (${user.id})`);
         } catch (err) {
             console.log(`[ChatGateway] Connection rejected: ${err.message}`);
             client.disconnect();
