@@ -11,7 +11,7 @@ export default function TeamsLayout({
             {/* Top Bar */}
             <header className="px-6 h-16 flex items-center justify-between border-b bg-background sticky top-0 z-50">
                 <div className="flex items-center gap-4">
-                    <Link href="/teams" className="font-bold text-xl tracking-tight hover:opacity-80 transition-opacity">
+                    <Link href="/" className="font-bold text-xl tracking-tight hover:opacity-80 transition-opacity">
                         HackHub
                     </Link>
                 </div>
