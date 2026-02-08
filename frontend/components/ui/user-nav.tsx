@@ -23,7 +23,7 @@ export function UserNav() {
     const handleSignOut = async () => {
         const supabase = createClient();
         await supabase.auth.signOut();
-        router.push('/login');
+        router.push('/');
     };
 
     if (!session?.user) return null;
