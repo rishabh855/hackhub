@@ -54,9 +54,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage('joinProject')
     async handleJoinProject(@MessageBody() projectId: string, @ConnectedSocket() client: Socket) {
+        console.log(`[ChatGateway] Join request for project: ${projectId}, Type: ${typeof projectId}`);
         // Verify Membership
         const userId = client.data.user?.sub || client.data.user?.userId;
         if (!userId) {
+            console.log(`[ChatGateway] Unauthorized join request from ${client.id}`);
             return { error: 'Unauthorized' };
         }
 
@@ -67,7 +69,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         }
 
         client.join(projectId); // Join a specific room for the project
-        console.log(`[ChatGateway] Client ${client.id} joined project ${projectId}`);
+        console.log(`[ChatGateway] Client ${client.id} joined project room: ${projectId}`);
+        const rooms = Array.from(client.rooms);
+        console.log(`[ChatGateway] Client ${client.id} rooms:`, rooms);
         return { event: 'joinedProject', data: projectId };
     }
 
@@ -87,9 +91,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
             // If it's a project message, emit to Project Room
             if (payload.projectId) {
+                console.log(`[ChatGateway] Broadcasting to project room: ${payload.projectId}`);
                 this.server.to(payload.projectId).emit('receiveMessage', message);
             } else {
                 // Otherwise emit to Team Room
+                console.log(`[ChatGateway] Broadcasting to team room: ${payload.teamId}`);
                 this.server.to(payload.teamId).emit('receiveMessage', message);
             }
             return message;

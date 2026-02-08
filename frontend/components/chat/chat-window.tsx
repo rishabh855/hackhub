@@ -77,10 +77,22 @@ export function ChatWindow({ teamId, projectId }: Props) {
             setIsConnected(true);
             if (projectId) {
                 console.log('[ChatWindow] Joining project room:', projectId);
-                socket.emit('joinProject', projectId);
+                socket.emit('joinProject', projectId, (response: any) => {
+                    console.log('[ChatWindow] Join Project Response:', response);
+                    if (response?.error) {
+                        console.error('[ChatWindow] Failed to join project:', response.error);
+                        setIsConnected(false); // Treat as connection failure or auth issue
+                    }
+                });
             } else {
                 console.log('[ChatWindow] Joining team room:', teamId);
-                socket.emit('joinTeam', teamId);
+                socket.emit('joinTeam', teamId, (response: any) => {
+                    console.log('[ChatWindow] Join Team Response:', response);
+                    if (response?.error) {
+                        console.error('[ChatWindow] Failed to join team:', response.error);
+                        setIsConnected(false);
+                    }
+                });
             }
         });
 
@@ -90,9 +102,13 @@ export function ChatWindow({ teamId, projectId }: Props) {
         });
 
         socket.on('receiveMessage', (message: Message) => {
-            console.log('[ChatWindow] Received message:', message);
+            console.log('[ChatWindow] Received message event:', message);
             setMessages((prev) => {
-                if (prev.some(m => m.id === message.id)) return prev;
+                if (prev.some(m => m.id === message.id)) {
+                    console.log('[ChatWindow] Duplicate message ignored:', message.id);
+                    return prev;
+                }
+                console.log('[ChatWindow] Adding new message to state:', message.id);
                 return [...prev, message];
             });
         });
