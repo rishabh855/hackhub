@@ -32,9 +32,8 @@ export class SnippetsController {
     }
 
     @Delete(':id')
-    @ProjectRoles(ProjectRole.MEMBER)
-    @UseGuards(ProjectRolesGuard)
-    remove(@Param('id') id: string) {
-        return this.snippetsService.deleteSnippet(id);
+    @UseGuards(SupabaseAuthGuard)
+    remove(@User() user: any, @Param('id') id: string) {
+        return this.snippetsService.deleteSnippet(id, user.id);
     }
 }

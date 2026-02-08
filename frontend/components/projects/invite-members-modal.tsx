@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createInvite } from '@/lib/invitations';
-import { Copy, Check, Mail, Link as LinkIcon, Hash, Loader2 } from 'lucide-react';
+import { Copy, Check, Mail, Link as LinkIcon, Hash, Loader2, Trash2, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import QRCode from 'react-qr-code';
 
@@ -16,14 +16,26 @@ interface Props {
     children: React.ReactNode;
 }
 
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getUserTeams, removeTeamMember } from '@/lib/api';
+import { useUser } from '@/hooks/use-user';
+
 export function InviteMembersModal({ teamId, children }: Props) {
+    const { session } = useUser();
     const [open, setOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('email');
+    const [activeTab, setActiveTab] = useState('members');
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [generatedLink, setGeneratedLink] = useState('');
     const [generatedCode, setGeneratedCode] = useState('');
     const [copied, setCopied] = useState(false);
+    const [members, setMembers] = useState<any[]>([]);
+
+    useEffect(() => {
+        if (open) {
+            loadMembers();
+        }
+    }, [open]);
 
     // Auto-generate on tab switch
     useEffect(() => {
@@ -35,6 +47,32 @@ export function InviteMembersModal({ teamId, children }: Props) {
             }
         }
     }, [activeTab, open]);
+
+    const loadMembers = async () => {
+        if (!session?.user) return;
+        try {
+            // @ts-ignore
+            const teams = await getUserTeams(session.user.id);
+            const team = teams.find((t: any) => t.id === teamId);
+            if (team) {
+                setMembers(team.members || []);
+            }
+        } catch (err) {
+            console.error('Failed to load members', err);
+        }
+    };
+
+    const handleRemoveMember = async (memberId: string) => {
+        if (!confirm('Are you sure you want to remove this member?')) return;
+        try {
+            // @ts-ignore
+            await removeTeamMember(teamId, memberId, session?.user?.id);
+            toast.success('Member removed');
+            loadMembers();
+        } catch (err: any) {
+            toast.error(err.message);
+        }
+    };
 
     const handleCreateEmailInvite = async () => {
         if (!email) return;
@@ -88,16 +126,46 @@ export function InviteMembersModal({ teamId, children }: Props) {
             <DialogTrigger asChild>
                 {children}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader>
-                    <DialogTitle>Invite Members</DialogTitle>
+                    <DialogTitle>Manage Team</DialogTitle>
                 </DialogHeader>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
+                        <TabsTrigger value="members"><Users className="w-4 h-4 mr-2" /> Members</TabsTrigger>
                         <TabsTrigger value="email"><Mail className="w-4 h-4 mr-2" /> Email</TabsTrigger>
                         <TabsTrigger value="link"><LinkIcon className="w-4 h-4 mr-2" /> Link</TabsTrigger>
                         <TabsTrigger value="code"><Hash className="w-4 h-4 mr-2" /> Code</TabsTrigger>
                     </TabsList>
+
+                    <TabsContent value="members" className="space-y-4 pt-4">
+                        <div className="space-y-4 max-h-[300px] overflow-y-auto">
+                            {members.map((member) => (
+                                <div key={member.id} className="flex items-center justify-between p-2 rounded-lg border">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={member.user?.image || ''} />
+                                            <AvatarFallback>{member.user?.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-sm font-medium">{member.user?.username || member.user?.email}</p>
+                                            <p className="text-xs text-muted-foreground capitalize">{member.role.toLowerCase()}</p>
+                                        </div>
+                                    </div>
+                                    {member.role !== 'OWNER' && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                            onClick={() => handleRemoveMember(member.id)}
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </TabsContent>
 
                     <TabsContent value="email" className="space-y-4 pt-4">
                         <div className="space-y-2">

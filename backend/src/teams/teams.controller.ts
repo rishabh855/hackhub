@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseGuards, Delete } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 import { SupabaseAuthGuard } from '../auth/supabase.guard';
 import { User } from '../auth/user.decorator';
@@ -22,5 +22,14 @@ export class TeamsController {
     @Post(':id/members')
     invite(@Param('id') teamId: string, @Body('email') email: string) {
         return this.teamsService.inviteMember(teamId, email);
+    }
+    @Delete(':id')
+    deleteTeam(@User() user: any, @Param('id') teamId: string) {
+        return this.teamsService.deleteTeam(teamId, user.id);
+    }
+
+    @Delete(':id/members/:memberId')
+    removeMember(@User() user: any, @Param('id') teamId: string, @Param('memberId') memberId: string) {
+        return this.teamsService.removeMember(teamId, user.id, memberId);
     }
 }

@@ -5,7 +5,8 @@ import { useUser } from '@/hooks/use-user';
 import { getUserTeams } from '@/lib/api';
 import { CreateTeamDialog } from '@/components/teams/create-team-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, QrCode } from 'lucide-react';
+import { Users, QrCode, Trash2 } from 'lucide-react';
+import { deleteTeam } from '@/lib/api';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { JoinTeamDialog } from '@/components/projects/join-project-dialog';
@@ -83,6 +84,30 @@ export default function TeamsPage() {
                                 <div className="text-sm text-muted-foreground">
                                     {team.members?.length || 0} member{(team.members?.length || 0) !== 1 ? 's' : ''}
                                 </div>
+                                {session?.user?.id && team.members?.find((m: any) => m.userId === session.user.id && m.role === 'OWNER') && (
+                                    <div className="mt-4 flex justify-end">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-muted-foreground hover:text-destructive h-6 px-2 text-xs"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (confirm('Are you sure you want to delete this team? All projects and tasks will be lost.')) {
+                                                    try {
+                                                        // @ts-ignore
+                                                        await deleteTeam(team.id, session.user.id);
+                                                        fetchTeams();
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 className="w-3 h-3 mr-1" /> Delete
+                                        </Button>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </Link>

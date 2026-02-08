@@ -251,12 +251,17 @@ export function KanbanBoard({ projectId }: Props) {
                             tasks={filteredTasks.filter((t) => t.status === col.id)}
                             deleteTask={handleDeleteTask}
                             onTaskClick={onTaskClick}
+                            role={role || 'VIEWER'}
                         />
                     ))}
                 </div>
                 <DragOverlay>
                     {activeId ? (
-                        <TaskCard task={tasks.find((t) => t.id === activeId)!} deleteTask={() => { }} />
+                        <TaskCard
+                            task={tasks.find((t) => t.id === activeId)!}
+                            deleteTask={() => { }}
+                            role={role || 'VIEWER'}
+                        />
                     ) : null}
                 </DragOverlay>
             </DndContext>

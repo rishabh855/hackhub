@@ -42,7 +42,28 @@ export class TasksService {
         });
     }
 
-    async deleteTask(id: string) {
+    async deleteTask(id: string, userId: string) {
+        const task = await this.prisma.task.findUnique({
+            where: { id },
+            include: { project: true }
+        });
+
+        if (!task) throw new NotFoundException('Task not found');
+
+        // Check Team Owner
+        const teamMember = await this.prisma.teamMember.findUnique({
+            where: {
+                userId_teamId: {
+                    userId,
+                    teamId: task.project.teamId
+                }
+            }
+        });
+
+        if (!teamMember || teamMember.role !== 'OWNER') {
+            throw new NotFoundException('Only Team Owners can delete tasks');
+        }
+
         return this.prisma.task.delete({ where: { id } });
     }
 }

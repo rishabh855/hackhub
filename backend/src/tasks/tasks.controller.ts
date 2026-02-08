@@ -4,6 +4,7 @@ import { ProjectRoles } from '../auth/project-roles.decorator';
 import { ProjectRolesGuard } from '../auth/project-roles.guard';
 import { ProjectRole } from '../projects/project-role.enum';
 import { SupabaseAuthGuard } from '../auth/supabase.guard';
+import { User } from '../auth/user.decorator';
 
 @Controller('tasks')
 @UseGuards(SupabaseAuthGuard)
@@ -30,10 +31,8 @@ export class TasksController {
     }
 
     @Delete(':id')
-    @ProjectRoles(ProjectRole.MEMBER)
-    @UseGuards(ProjectRolesGuard)
-    delete(@Param('id') id: string) {
-        // Warning: guard needs projectId in query/body!
-        return this.tasksService.deleteTask(id);
+    @UseGuards(SupabaseAuthGuard)
+    delete(@User() user: any, @Param('id') id: string) {
+        return this.tasksService.deleteTask(id, user.id);
     }
 }

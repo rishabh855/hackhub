@@ -5,6 +5,32 @@ import { PrismaService } from '../prisma.service';
 export class ProjectsService {
     constructor(private prisma: PrismaService) { }
 
+    async deleteProject(id: string, userId: string) {
+        const project = await this.prisma.project.findUnique({
+            where: { id },
+        });
+
+        if (!project) throw new NotFoundException('Project not found');
+
+        // Check Team Owner
+        const teamMember = await this.prisma.teamMember.findUnique({
+            where: {
+                userId_teamId: {
+                    userId,
+                    teamId: project.teamId
+                }
+            }
+        });
+
+        if (!teamMember || teamMember.role !== 'OWNER') {
+            throw new NotFoundException('Only Team Owners can delete projects');
+        }
+
+        return this.prisma.project.delete({
+            where: { id },
+        });
+    }
+
     async updateProject(id: string, data: { name?: string; description?: string; submissionGithub?: string; submissionDemo?: string; submissionPPT?: string; submissionVideo?: string; submissionDescription?: string }) {
         return this.prisma.project.update({
             where: { id },

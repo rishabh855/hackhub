@@ -16,9 +16,10 @@ interface Props {
     tasks: Task[];
     deleteTask: (id: string) => void;
     onTaskClick?: (task: Task) => void;
+    role: string;
 }
 
-export function KanbanColumn({ id, title, tasks, deleteTask, onTaskClick }: Props) {
+export function KanbanColumn({ id, title, tasks, deleteTask, onTaskClick, role }: Props) {
     const { setNodeRef } = useDroppable({ id });
 
     return (
@@ -42,6 +43,7 @@ export function KanbanColumn({ id, title, tasks, deleteTask, onTaskClick }: Prop
                                 task={task}
                                 deleteTask={deleteTask}
                                 onClick={() => onTaskClick?.(task)}
+                                role={role}
                             />
                         ))
                     )}

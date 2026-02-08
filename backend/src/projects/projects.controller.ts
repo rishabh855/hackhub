@@ -83,6 +83,12 @@ export class ProjectsController {
         return this.projectsService.getProject(id);
     }
 
+    @Delete(':id')
+    @UseGuards(SupabaseAuthGuard)
+    deleteProject(@User() user: any, @Param('id') id: string) {
+        return this.projectsService.deleteProject(id, user.id);
+    }
+
     @Patch(':id')
     @ProjectRoles(ProjectRole.MEMBER)
     @UseGuards(ProjectRolesGuard)

@@ -334,3 +334,39 @@ export async function getProjectBurndown(projectId: string) {
     if (!res.ok) throw new Error('Failed to fetch burndown data');
     return res.json();
 }
+
+export async function deleteTeam(teamId: string, userId: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+
+    const res = await fetch(`${BACKEND_URL}/teams/${teamId}`, {
+        method: 'DELETE',
+        headers,
+    });
+    if (!res.ok) throw new Error('Failed to delete team');
+    return res.json();
+}
+
+export async function removeTeamMember(teamId: string, memberId: string, userId: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+
+    const res = await fetch(`${BACKEND_URL}/teams/${teamId}/members/${memberId}`, {
+        method: 'DELETE',
+        headers,
+    });
+    if (!res.ok) throw new Error('Failed to remove team member');
+    return res.json();
+}
+
+export async function deleteProject(projectId: string, userId: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+
+    const res = await fetch(`${BACKEND_URL}/projects/${projectId}`, {
+        method: 'DELETE',
+        headers,
+    });
+    if (!res.ok) throw new Error('Failed to delete project');
+    return res.json();
+}

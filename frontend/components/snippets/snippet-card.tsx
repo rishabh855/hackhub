@@ -70,7 +70,7 @@ export function SnippetCard({ snippet, onDelete, projectId, role }: SnippetCardP
                         <div onClick={(e) => e.stopPropagation()}>
                             <SnippetExplainer code={snippet.code} language={snippet.language} />
                         </div>
-                        {!isViewer && (
+                        {role === 'OWNER' && (
                             <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={handleDelete}>
                                 <Trash2 className="h-3 w-3" />
                             </Button>

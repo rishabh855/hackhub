@@ -97,4 +97,43 @@ export class TeamsService {
             throw error;
         }
     }
+
+    async deleteTeam(teamId: string, userId: string) {
+        // Check if user is OWNER
+        const member = await this.prisma.teamMember.findUnique({
+            where: { userId_teamId: { userId, teamId } }
+        });
+
+        if (!member || member.role !== 'OWNER') {
+            throw new NotFoundException('Only Team Owners can delete the team');
+        }
+
+        return this.prisma.team.delete({
+            where: { id: teamId }
+        });
+    }
+
+    async removeMember(teamId: string, userId: string, memberIdToRemove: string) {
+        // Check if requester is OWNER
+        const requester = await this.prisma.teamMember.findUnique({
+            where: { userId_teamId: { userId, teamId } }
+        });
+
+        if (!requester || requester.role !== 'OWNER') {
+            throw new NotFoundException('Only Team Owners can remove members');
+        }
+
+        // Get member to remove to verify they exist and check logic
+        const member = await this.prisma.teamMember.findUnique({
+            where: { id: memberIdToRemove }
+        });
+
+        if (!member || member.teamId !== teamId) {
+            throw new NotFoundException('Member not found in this team');
+        }
+
+        return this.prisma.teamMember.delete({
+            where: { id: memberIdToRemove }
+        });
+    }
 }

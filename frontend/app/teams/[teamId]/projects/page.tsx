@@ -7,7 +7,8 @@ import { CreateProjectDialog } from '@/components/projects/create-project-dialog
 import { InviteMembersModal } from '@/components/projects/invite-members-modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Folder, Plus } from 'lucide-react';
+import { ArrowLeft, Folder, Plus, Trash2 } from 'lucide-react';
+import { deleteProject } from '@/lib/api';
 import Link from 'next/link';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
@@ -111,11 +112,30 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 <h1 className="text-3xl font-bold tracking-tight text-foreground">Projects</h1>
                 <div className="flex items-center gap-2">
                     {isTeamOwner && (
-                        <InviteMembersModal teamId={teamId}>
-                            <Button variant="outline">
-                                <Plus className="w-4 h-4 mr-2" /> Invite Members
+                        <>
+                            <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={async () => {
+                                    if (confirm('Are you sure you want to delete this team? All projects and data will be permanently lost.')) {
+                                        try {
+                                            // @ts-ignore
+                                            await deleteTeam(teamId, session.user.id);
+                                            window.location.href = '/teams';
+                                        } catch (err) {
+                                            console.error(err);
+                                        }
+                                    }
+                                }}
+                            >
+                                <Trash2 className="w-4 h-4 mr-2" /> Delete Team
                             </Button>
-                        </InviteMembersModal>
+                            <InviteMembersModal teamId={teamId}>
+                                <Button variant="outline">
+                                    <Plus className="w-4 h-4 mr-2" /> Invite Members
+                                </Button>
+                            </InviteMembersModal>
+                        </>
                     )}
                     <CreateProjectDialog teamId={teamId} onProjectCreated={fetchProjects} />
                 </div>
@@ -148,6 +168,30 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                                         })()}
                                     </div>
                                 </div>
+                                {isTeamOwner && (
+                                    <div className="mt-4 flex justify-end">
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="text-muted-foreground hover:text-destructive h-6 px-2 text-xs"
+                                            onClick={async (e) => {
+                                                e.preventDefault();
+                                                e.stopPropagation();
+                                                if (confirm('Are you sure you want to delete this project?')) {
+                                                    try {
+                                                        // @ts-ignore
+                                                        await deleteProject(project.id, session.user.id);
+                                                        fetchProjects();
+                                                    } catch (err) {
+                                                        console.error(err);
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            <Trash2 className="w-3 h-3 mr-1" /> Delete
+                                        </Button>
+                                    </div>
+                                )}
                             </CardContent>
                         </Card>
                     </Link>

@@ -19,9 +19,10 @@ interface Props {
     task: Task;
     deleteTask: (id: string) => void;
     onClick?: () => void;
+    role: string;
 }
 
-export function TaskCard({ task, deleteTask, onClick }: Props) {
+export function TaskCard({ task, deleteTask, onClick, role }: Props) {
     const {
         attributes,
         listeners,
@@ -62,18 +63,20 @@ export function TaskCard({ task, deleteTask, onClick }: Props) {
                         <CardTitle className="text-sm font-medium leading-none">
                             {task.title}
                         </CardTitle>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onPointerDown={(e) => e.stopPropagation()}
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                deleteTask(task.id);
-                            }}
-                        >
-                            <Trash2 className="h-3 w-3" />
-                        </Button>
+                        {role === 'OWNER' && (
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-red-500 transition-colors"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    deleteTask(task.id);
+                                }}
+                            >
+                                <Trash2 className="h-3 w-3" />
+                            </Button>
+                        )}
                     </CardHeader>
                     <CardContent className="p-4 pt-2">
                         <div className="flex items-center justify-between mt-2">

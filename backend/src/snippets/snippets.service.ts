@@ -24,7 +24,30 @@ export class SnippetsService {
         });
     }
 
-    async deleteSnippet(id: string) {
+    async deleteSnippet(id: string, userId: string) {
+        const snippet = await this.prisma.snippet.findUnique({
+            where: { id },
+            include: { project: true }
+        });
+
+        if (!snippet) throw new NotFoundException('Snippet not found');
+
+        // Check if user is Team Owner
+        const teamMember = await this.prisma.teamMember.findUnique({
+            where: {
+                userId_teamId: {
+                    userId,
+                    teamId: snippet.project.teamId
+                }
+            }
+        });
+
+        if (!teamMember || teamMember.role !== 'OWNER') {
+            // Also allow if user is the snippet creator? 
+            // Requirement said "only team owner". Sticking to that.
+            throw new NotFoundException('Only Team Owners can delete snippets'); // Using NotFound to hide existence or Forbidden
+        }
+
         return this.prisma.snippet.delete({
             where: { id },
         });
