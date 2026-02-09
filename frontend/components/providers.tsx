@@ -1,3 +1,11 @@
+'use client';
+
+import { UserProvider } from './user-provider';
+
 export function Providers({ children }: { children: React.ReactNode }) {
-    return <>{children}</>;
+    return (
+        <UserProvider>
+            {children}
+        </UserProvider>
+    );
 }
