@@ -1,5 +1,7 @@
 'use client';
 
+import useSWR from 'swr';
+
 import { useState, useEffect } from 'react';
 import {
     DndContext,
@@ -63,9 +65,9 @@ const COLUMNS = [
 
 export function KanbanBoard({ projectId }: Props) {
     const { session } = useUser();
-    const [tasks, setTasks] = useState<Task[]>([]);
+    // const [tasks, setTasks] = useState<Task[]>([]); // Removed in favor of SWR
     const [activeId, setActiveId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+    // const [loading, setLoading] = useState(false); // Removed
     const [isMounted, setIsMounted] = useState(false);
     const [role, setRole] = useState<string | null>(null);
 
@@ -73,9 +75,17 @@ export function KanbanBoard({ projectId }: Props) {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [selectedSheetTask, setSelectedSheetTask] = useState<Task | null>(null);
 
+    const { data: tasks = [], error, mutate } = useSWR<Task[]>(
+        projectId ? ['tasks', projectId] : null,
+        ([_, id]) => getProjectTasks(id as string),
+        {
+            refreshInterval: 5000,
+            revalidateOnFocus: true
+        }
+    );
+
     useEffect(() => {
         setIsMounted(true);
-        loadTasks();
     }, [projectId]);
 
     useEffect(() => {
@@ -86,15 +96,6 @@ export function KanbanBoard({ projectId }: Props) {
             });
         }
     }, [session, projectId]);
-
-    async function loadTasks() {
-        try {
-            const data = await getProjectTasks(projectId);
-            setTasks(data);
-        } catch (err) {
-            console.error(err);
-        }
-    }
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -136,10 +137,13 @@ export function KanbanBoard({ projectId }: Props) {
 
         if (activeTask && newStatus && activeTask.status !== newStatus) {
             // Optimistic Update
-            setTasks((prev) =>
-                prev.map((t) =>
+            // Optimistic Update
+            mutate(
+                // @ts-ignore
+                prev => prev.map((t) =>
                     t.id === activeTask.id ? { ...t, status: newStatus! } : t
-                )
+                ),
+                false // Do not revalidate immediately
             );
 
             try {
@@ -147,7 +151,7 @@ export function KanbanBoard({ projectId }: Props) {
                 await updateTask(activeTask.id, { status: newStatus }, session?.user?.id, projectId);
             } catch (err) {
                 console.error("Failed to update task status", err);
-                loadTasks(); // Revert on failure
+                mutate(); // Revert on failure
             }
         }
 
@@ -163,7 +167,8 @@ export function KanbanBoard({ projectId }: Props) {
         try {
             // @ts-ignore
             await deleteTask(id, projectId, session?.user?.id);
-            setTasks(prev => prev.filter(t => t.id !== id));
+            // Optimistic delete or revalidate
+            mutate(tasks.filter(t => t.id !== id), false);
             console.log('Task deleted successfully');
         } catch (err: any) {
             console.error('Delete failed:', err);
@@ -227,9 +232,9 @@ export function KanbanBoard({ projectId }: Props) {
                                         New Task
                                     </Button>
                                 }
-                                onTaskCreated={loadTasks}
+                                onTaskCreated={() => mutate()}
                             />
-                            <AiTaskSuggester projectId={projectId} onTasksCreated={loadTasks} />
+                            <AiTaskSuggester projectId={projectId} onTasksCreated={() => mutate()} />
                         </>
                     )}
                     <TeamMembersDialog projectId={projectId} />
@@ -269,7 +274,7 @@ export function KanbanBoard({ projectId }: Props) {
             <Sheet open={isSheetOpen} onOpenChange={(open) => {
                 setIsSheetOpen(open);
                 if (!open) {
-                    loadTasks();
+                    mutate();
                     setSelectedSheetTask(null);
                 }
             }}>
@@ -285,7 +290,7 @@ export function KanbanBoard({ projectId }: Props) {
                             onUpdate={() => {
                                 // Auto-saving, might not need full reload but safe to do
                                 // Don't close sheet on update
-                                loadTasks();
+                                mutate();
                             }}
                         />
                     )}

@@ -182,6 +182,11 @@ model Task {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model Message {
@@ -197,6 +202,9 @@ model Message {
   project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
+
+  @@index([teamId])
+  @@index([projectId])
 }
 
 model Snippet {
@@ -214,6 +222,9 @@ model Snippet {
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([userId])
 }
 
 model Decision {
@@ -231,6 +242,8 @@ model Decision {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([projectId])
 }
 
 model DecisionNote {
