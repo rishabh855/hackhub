@@ -113,7 +113,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
     return (
         <div className="space-y-8">
             {/* Breadcrumb */}
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="flex items-center gap-2 text-sm text-slate-400"
@@ -126,7 +126,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 <span className="font-medium text-white">{teamName || 'This Team'}</span>
             </motion.div>
 
-            <motion.div 
+            <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.1 }}
@@ -164,7 +164,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
                 variants={containerVariants}
                 initial="hidden"
                 animate="show"
@@ -174,7 +174,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                     <motion.div key={project.id} variants={itemVariants} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
                         <Link href={`/teams/${teamId}/projects/${project.id}`} className="block h-full group">
                             <div className="h-full bg-white/5 backdrop-blur-md rounded-xl border border-white/10 group-hover:border-indigo-500/50 transition-all duration-300 p-6 flex flex-col shadow-lg group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)] relative overflow-hidden">
-                                
+
                                 {/* Ambient inner glow on hover */}
                                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-transparent to-purple-500/0 group-hover:from-indigo-500/5 group-hover:to-purple-500/5 transition-colors duration-500 pointer-events-none" />
 
@@ -186,7 +186,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                                         <Folder className="h-4 w-4" />
                                     </div>
                                 </div>
-                                
+
                                 <div className="text-sm text-slate-400 line-clamp-2 min-h-[2.5rem] relative z-10">
                                     {project.description || 'No description provided.'}
                                 </div>
