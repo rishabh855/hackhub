@@ -7,12 +7,21 @@ export default function TeamsLayout({
     children: React.ReactNode;
 }) {
     return (
-        <div className="min-h-screen flex flex-col bg-muted/10">
+        <div className="min-h-screen flex flex-col bg-[#040814] relative selection:bg-indigo-500/30 selection:text-white">
+            {/* Background grain noise for texture */}
+            <div 
+              className="fixed inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-0"
+              style={{ backgroundImage: "url('https://grainy-gradients.vercel.app/noise.svg')" }}
+            />
+
             {/* Top Bar */}
-            <header className="px-6 h-16 flex items-center justify-between border-b bg-background sticky top-0 z-50">
+            <header className="fixed top-6 left-1/2 -translate-x-1/2 w-[95%] max-w-[1400px] z-50 h-[72px] rounded-2xl px-6 flex items-center justify-between backdrop-blur-xl bg-white/5 border border-white/10 shadow-2xl">
                 <div className="flex items-center gap-4">
-                    <Link href="/" className="font-bold text-xl tracking-tight hover:opacity-80 transition-opacity">
-                        HackHub
+                    <Link href="/" className="flex items-center gap-3 cursor-pointer group">
+                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-500/20 group-hover:shadow-indigo-500/40 transition-shadow">
+                            H
+                        </div>
+                        <span className="font-bold text-xl tracking-tight text-white">HackHub</span>
                     </Link>
                 </div>
 
@@ -22,7 +31,7 @@ export default function TeamsLayout({
             </header>
 
             {/* Main Content */}
-            <main className="flex-1 w-full max-w-7xl mx-auto px-6 py-8">
+            <main className="flex-1 w-full max-w-[1400px] mx-auto px-6 pt-32 pb-12 relative z-10">
                 {children}
             </main>
         </div>
