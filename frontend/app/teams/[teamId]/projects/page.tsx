@@ -1,5 +1,4 @@
 'use client';
-// Force Vercel rebuild with dummy comment
 
 import { useEffect, useState, use, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
@@ -108,7 +107,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
 
     const itemVariants = {
         hidden: { opacity: 0, y: 20 },
-        show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+        show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 300, damping: 24 } }
     };
 
     return (
