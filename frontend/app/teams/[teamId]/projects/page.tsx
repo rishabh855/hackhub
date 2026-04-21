@@ -12,6 +12,7 @@ import { deleteProject } from '@/lib/api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 
 interface Project {
     id: string;
