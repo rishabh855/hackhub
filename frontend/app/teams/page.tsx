@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, QrCode, Trash2 } from 'lucide-react';
 import { deleteTeam } from '@/lib/api';
 import Link from 'next/link';
-import { DeleteTeamButton } from '@/components/teams/delete-team-button'; // Or inline if small
 import { Skeleton } from '@/components/ui/skeleton';
 import { JoinTeamDialog } from '@/components/projects/join-project-dialog';
 import { Button } from '@/components/ui/button';
