@@ -1,5 +1,5 @@
 'use client';
-// Force Vercel rebuild with dummy comment
+// this is a dummy comment
 
 import { useEffect, useState, use, useCallback } from 'react';
 import { useUser } from '@/hooks/use-user';
