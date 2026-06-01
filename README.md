@@ -1,5 +1,9 @@
 # HackHub
 
+
+live at : https://hackhub-pi.vercel.app/
+
+
 **The All-In-One Workspace for High-Velocity Hackathon Teams.**
 
 HackHub is a comprehensive project management and collaboration platform designed specifically for the fast-paced environment of hackathons. It unifies task management, real-time communication, decision tracking, and code snippet sharing into a single, cohesive interface, enabling teams to build better and faster together.
