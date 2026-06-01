@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 
 @Injectable()
@@ -134,6 +134,28 @@ export class TeamsService {
 
         return this.prisma.teamMember.delete({
             where: { id: memberIdToRemove }
+        });
+    }
+
+    async updateMemberRole(teamId: string, userId: string, memberIdToUpdate: string, role: string) {
+        // Only OWNER can promote/demote
+        const requester = await this.prisma.teamMember.findUnique({
+            where: { userId_teamId: { userId, teamId } }
+        });
+
+        if (!requester || requester.role !== 'OWNER') {
+            throw new ForbiddenException('Only Team Owners can manage member roles');
+        }
+
+        // Validate role values
+        const allowedRoles = ['OWNER', 'LEADER', 'MEMBER'];
+        if (!allowedRoles.includes(role)) {
+            throw new BadRequestException('Invalid role. Allowed roles are: OWNER, LEADER, MEMBER');
+        }
+
+        return this.prisma.teamMember.update({
+            where: { id: memberIdToUpdate },
+            data: { role }
         });
     }
 }

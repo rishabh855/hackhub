@@ -55,7 +55,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
                 userId: user.id
             };
 
-            console.log(`[ChatGateway] Client connected: ${client.id}, User: ${user.email} (${user.id})`);
+            // Join user-specific notification room
+            await client.join(user.id);
+
+            console.log(`[ChatGateway] Client connected: ${client.id}, User: ${user.email} (${user.id}) joined room ${user.id}`);
         } catch (err) {
             console.log(`[ChatGateway] Connection rejected: ${err.message}`);
             client.disconnect();

@@ -34,6 +34,15 @@ model User {
   projectMembers ProjectMember[]
   decisions     Decision[]
   decisionNotes DecisionNote[]
+
+  // Collaborative Task Relations
+  activeTasks     Task[]           @relation(name: "ActiveTasks")
+  reviewedTasks   Task[]           @relation(name: "ReviewedTasks")
+  completedTasks  Task[]           @relation(name: "CompletedTasks")
+  taskAssignees   TaskAssignee[]
+  taskActivities  TaskActivity[]
+  taskComments    TaskComment[]
+  notifications   Notification[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -144,7 +153,7 @@ model Task {
   title       String
   description String?
   status      String   @default("TODO") // TODO, IN_PROGRESS, REVIEW, DONE
-  priority    String   @default("MEDIUM") // LOW, MEDIUM, HIGH
+  priority    TaskPriority @default(MEDIUM)
   dueDate     DateTime?
   labels      String[]
   projectId   String
@@ -153,11 +162,32 @@ model Task {
   blockedReason String?
   completedAt DateTime?
 
+  // Collaborative & Workflow Fields
+  position      Float     @default(0)
+  activeById    String?
+  reviewedById  String?
+  completedById String?
+  startedAt     DateTime?
+  deletedAt     DateTime?
+
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee    User?    @relation(fields: [assigneeId], references: [id])
+  activeBy    User?    @relation(name: "ActiveTasks", fields: [activeById], references: [id])
+  reviewedBy  User?    @relation(name: "ReviewedTasks", fields: [reviewedById], references: [id])
+  completedBy User?    @relation(name: "CompletedTasks", fields: [completedById], references: [id])
+
+  assignees   TaskAssignee[]
+  activities  TaskActivity[]
+  comments    TaskComment[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model Message {
@@ -220,4 +250,71 @@ model DecisionNote {
 
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model TaskAssignee {
+  id         String   @id @default(cuid())
+  taskId     String
+  userId     String
+  assignedAt DateTime @default(now())
+
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([taskId, userId])
+  @@index([taskId])
+  @@index([userId])
+}
+
+model TaskActivity {
+  id         String   @id @default(cuid())
+  taskId     String
+  userId     String
+  action     String   // e.g. CREATED, STATUS_CHANGED, ASSIGNED, REVIEW_SUBMITTED, APPROVED, REJECTED, MEMBER_ADDED, MEMBER_REMOVED
+  oldStatus  String?
+  newStatus  String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model TaskComment {
+  id        String   @id @default(cuid())
+  taskId    String
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      String   // TASK_ASSIGNED, REVIEW_REQUESTED, TASK_APPROVED, TASK_REJECTED, MEMBER_PROMOTED
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

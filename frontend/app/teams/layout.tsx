@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserNav } from "@/components/ui/user-nav";
+import { NotificationBell } from "@/components/ui/notification-bell";
 
 export default function TeamsLayout({
     children,
@@ -26,6 +27,7 @@ export default function TeamsLayout({
                 </div>
 
                 <div className="flex items-center gap-4">
+                    <NotificationBell />
                     <UserNav />
                 </div>
             </header>

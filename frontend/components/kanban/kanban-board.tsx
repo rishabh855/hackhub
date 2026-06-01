@@ -15,6 +15,7 @@ import {
     DragEndEvent,
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { io } from 'socket.io-client';
 import { KanbanColumn } from './kanban-column';
 import { TaskCard } from './task-card';
 import { Button } from '@/components/ui/button';
@@ -41,15 +42,65 @@ import { getProjectMembers, getProjectTasks, updateTask, deleteTask, getProjectM
 import { useUser } from "@/hooks/use-user";
 import { AiTaskSuggester } from '@/components/ai/ai-task-suggester';
 
+// Centralized allowed transitions matching the backend
+const MEMBER_ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    TODO: ['IN_PROGRESS'],
+    IN_PROGRESS: ['REVIEW'],
+    REVIEW: [],
+    DONE: [],
+};
+
+const LEADER_ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    TODO: ['IN_PROGRESS', 'REVIEW', 'DONE'],
+    IN_PROGRESS: ['TODO', 'REVIEW', 'DONE'],
+    REVIEW: ['IN_PROGRESS', 'DONE'],
+    DONE: ['REVIEW'],
+};
+
+const OWNER_ALLOWED_TRANSITIONS: Record<string, string[]> = {
+    TODO: ['IN_PROGRESS', 'REVIEW', 'DONE'],
+    IN_PROGRESS: ['TODO', 'REVIEW', 'DONE'],
+    REVIEW: ['IN_PROGRESS', 'DONE'],
+    DONE: ['REVIEW'],
+};
+
+function canMoveTask(role: string, currentStatus: string, nextStatus: string): boolean {
+    if (currentStatus === nextStatus) return true;
+    let allowed: string[] = [];
+    if (role === 'OWNER') {
+        allowed = OWNER_ALLOWED_TRANSITIONS[currentStatus] || [];
+    } else if (role === 'LEADER') {
+        allowed = LEADER_ALLOWED_TRANSITIONS[currentStatus] || [];
+    } else {
+        allowed = MEMBER_ALLOWED_TRANSITIONS[currentStatus] || [];
+    }
+    return allowed.includes(nextStatus);
+}
+
+interface User {
+    id: string;
+    name: string;
+    image?: string;
+    email?: string;
+}
+
+interface TaskAssignee {
+    userId: string;
+    user: User;
+}
+
 interface Task {
     id: string;
     title: string;
     description?: string;
     status: string; // 'TODO', 'IN_PROGRESS', 'REVIEW', 'DONE'
-    priority: string; // 'LOW', 'MEDIUM', 'HIGH'
+    priority: string; // 'LOW', 'MEDIUM', 'HIGH', 'URGENT'
     dueDate?: string;
     isBlocked?: boolean;
     blockedReason?: string;
+    position: number;
+    assignees?: TaskAssignee[];
+    activeBy?: User;
 }
 
 interface Props {
@@ -65,9 +116,7 @@ const COLUMNS = [
 
 export function KanbanBoard({ projectId }: Props) {
     const { session } = useUser();
-    // const [tasks, setTasks] = useState<Task[]>([]); // Removed in favor of SWR
     const [activeId, setActiveId] = useState<string | null>(null);
-    // const [loading, setLoading] = useState(false); // Removed
     const [isMounted, setIsMounted] = useState(false);
     const [role, setRole] = useState<string | null>(null);
 
@@ -97,6 +146,41 @@ export function KanbanBoard({ projectId }: Props) {
         }
     }, [session, projectId]);
 
+    // WebSocket realtime connection for instant updates
+    useEffect(() => {
+        if (!session?.access_token || !projectId) return;
+
+        const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        const socket = io(SOCKET_URL, {
+            auth: { token: session.access_token },
+            transports: ['websocket'],
+        });
+
+        socket.on('connect', () => {
+            console.log('[KanbanBoard] Connected to real-time sync, joining project room:', projectId);
+            socket.emit('joinProject', projectId);
+        });
+
+        socket.on('taskCreated', (task) => {
+            console.log('[KanbanBoard] Task created event received');
+            mutate();
+        });
+
+        socket.on('taskUpdated', (task) => {
+            console.log('[KanbanBoard] Task updated event received');
+            mutate();
+        });
+
+        socket.on('taskDeleted', (payload) => {
+            console.log('[KanbanBoard] Task deleted event received');
+            mutate();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [projectId, session?.access_token, mutate]);
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: { distance: 5 } // Fix for button clicks
@@ -108,6 +192,17 @@ export function KanbanBoard({ projectId }: Props) {
 
     function handleDragStart(event: DragStartEvent) {
         if (role === 'VIEWER') return;
+        const activeTask = tasks.find((t) => t.id === event.active.id);
+        
+        // Enforce member edit permissions (must be assigned to the task)
+        if (role === 'MEMBER') {
+            const isAssignee = activeTask?.assignees?.some((a) => a.userId === session?.user?.id);
+            if (!isAssignee) {
+                alert("Members can only move tasks assigned to them.");
+                return;
+            }
+        }
+        
         setActiveId(event.active.id as string);
     }
 
@@ -136,11 +231,28 @@ export function KanbanBoard({ projectId }: Props) {
         }
 
         if (activeTask && newStatus && activeTask.status !== newStatus) {
-            // Optimistic Update
+            const currentRole = role || 'MEMBER';
+
+            // 1. Enforce workflow transition map checks client-side
+            if (!canMoveTask(currentRole, activeTask.status, newStatus)) {
+                alert(`Insufficient permissions to move task from ${activeTask.status} to ${newStatus}`);
+                setActiveId(null);
+                return;
+            }
+
+            // 2. Enforce member assigned check
+            if (currentRole === 'MEMBER') {
+                const isAssignee = activeTask.assignees?.some((a) => a.userId === session?.user?.id);
+                if (!isAssignee) {
+                    alert("Members can only move tasks assigned to them.");
+                    setActiveId(null);
+                    return;
+                }
+            }
+
             // Optimistic Update
             mutate(
-                // @ts-ignore
-                prev => prev.map((t) =>
+                tasks.map((t) =>
                     t.id === activeTask.id ? { ...t, status: newStatus! } : t
                 ),
                 false // Do not revalidate immediately
@@ -149,6 +261,7 @@ export function KanbanBoard({ projectId }: Props) {
             try {
                 // @ts-ignore
                 await updateTask(activeTask.id, { status: newStatus }, session?.user?.id, projectId);
+                mutate(); // Revalidate SWR cache with backend confirmation
             } catch (err) {
                 console.error("Failed to update task status", err);
                 mutate(); // Revert on failure
@@ -159,15 +272,16 @@ export function KanbanBoard({ projectId }: Props) {
     }
 
     async function handleDeleteTask(id: string) {
-        if (role === 'VIEWER') {
-            alert('Viewers cannot delete tasks.');
+        const currentRole = role || 'MEMBER';
+        if (currentRole !== 'OWNER' && currentRole !== 'LEADER') {
+            alert('Only Team Owners and Leaders can delete tasks.');
             return;
         }
         console.log('Deleting task:', id);
         try {
             // @ts-ignore
             await deleteTask(id, projectId, session?.user?.id);
-            // Optimistic delete or revalidate
+            // Optimistic delete
             mutate(tasks.filter(t => t.id !== id), false);
             console.log('Task deleted successfully');
         } catch (err: any) {

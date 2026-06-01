@@ -370,3 +370,74 @@ export async function deleteProject(projectId: string, userId: string) {
     if (!res.ok) throw new Error('Failed to delete project');
     return res.json();
 }
+
+// Collaborative Task Management APIs
+export async function submitTaskReview(taskId: string, projectId: string, userId: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+    const res = await fetch(`${BACKEND_URL}/tasks/${taskId}/submit-review?projectId=${projectId}`, {
+        method: 'POST',
+        headers,
+    });
+    if (!res.ok) throw new Error('Failed to submit task for review');
+    return res.json();
+}
+
+export async function approveTask(taskId: string, projectId: string, userId: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+    const res = await fetch(`${BACKEND_URL}/tasks/${taskId}/approve?projectId=${projectId}`, {
+        method: 'POST',
+        headers,
+    });
+    if (!res.ok) throw new Error('Failed to approve task');
+    return res.json();
+}
+
+export async function rejectTask(taskId: string, projectId: string, userId: string, reason: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+    const res = await fetch(`${BACKEND_URL}/tasks/${taskId}/reject?projectId=${projectId}`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) throw new Error('Failed to reject task');
+    return res.json();
+}
+
+export async function getTaskActivities(taskId: string, projectId: string) {
+    const headers = await getHeaders();
+    const res = await fetch(`${BACKEND_URL}/tasks/${taskId}/activities?projectId=${projectId}`, { headers });
+    if (!res.ok) throw new Error('Failed to fetch task activities');
+    return res.json();
+}
+
+export async function updateTeamMemberRole(teamId: string, memberId: string, role: string, userId: string) {
+    const headers = await getHeaders();
+    headers['x-user-id'] = userId;
+    const res = await fetch(`${BACKEND_URL}/teams/${teamId}/members/${memberId}`, {
+        method: 'PATCH',
+        headers,
+        body: JSON.stringify({ role }),
+    });
+    if (!res.ok) throw new Error('Failed to update member role');
+    return res.json();
+}
+
+export async function getUserNotifications() {
+    const headers = await getHeaders();
+    const res = await fetch(`${BACKEND_URL}/notifications`, { headers });
+    if (!res.ok) throw new Error('Failed to fetch notifications');
+    return res.json();
+}
+
+export async function markNotificationAsRead(id: string) {
+    const headers = await getHeaders();
+    const res = await fetch(`${BACKEND_URL}/notifications/${id}/read`, {
+        method: 'POST',
+        headers,
+    });
+    if (!res.ok) throw new Error('Failed to mark notification as read');
+    return res.json();
+}

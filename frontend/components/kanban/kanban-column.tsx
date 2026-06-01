@@ -8,6 +8,12 @@ interface Task {
     description?: string;
     status: string;
     priority: string;
+    dueDate?: string | Date;
+    isBlocked?: boolean;
+    blockedReason?: string;
+    position?: number;
+    assignees?: any[];
+    activeBy?: any;
 }
 
 interface Props {
@@ -15,7 +21,7 @@ interface Props {
     title: string;
     tasks: Task[];
     deleteTask: (id: string) => void;
-    onTaskClick?: (task: Task) => void;
+    onTaskClick?: (task: any) => void;
     role: string;
 }
 
