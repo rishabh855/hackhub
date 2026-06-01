@@ -7,10 +7,42 @@ export class MembersService {
     constructor(private prisma: PrismaService) { }
 
     async getProjectMembers(projectId: string) {
-        return this.prisma.projectMember.findMany({
+        const explicitMembers = await this.prisma.projectMember.findMany({
             where: { projectId },
             include: { user: true },
         });
+
+        const project = await this.prisma.project.findUnique({
+            where: { id: projectId },
+            select: { teamId: true },
+        });
+
+        if (!project) {
+            return explicitMembers;
+        }
+
+        const teamMembers = await this.prisma.teamMember.findMany({
+            where: { teamId: project.teamId },
+            include: { user: true },
+        });
+
+        const seenUserIds = new Set(explicitMembers.map(m => m.userId));
+        const combined = [...explicitMembers];
+
+        for (const tm of teamMembers) {
+            if (!seenUserIds.has(tm.userId)) {
+                seenUserIds.add(tm.userId);
+                combined.push({
+                    id: `implicit-${tm.id}`,
+                    userId: tm.userId,
+                    projectId: projectId,
+                    role: tm.role,
+                    user: tm.user as any,
+                });
+            }
+        }
+
+        return combined;
     }
 
     async inviteMember(projectId: string, email: string, role: string = 'MEMBER') {
