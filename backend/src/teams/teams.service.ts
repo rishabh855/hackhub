@@ -55,7 +55,11 @@ export class TeamsService {
                 },
             },
             include: {
-                members: true,
+                members: {
+                    include: {
+                        user: true
+                    }
+                },
             },
         });
     }

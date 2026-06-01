@@ -176,10 +176,15 @@ export function InviteMembersModal({ teamId, children }: Props) {
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-8 w-8">
                                             <AvatarImage src={member.user?.image || ''} />
-                                            <AvatarFallback>{member.user?.username?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                                            <AvatarFallback>
+                                                {(member.user?.name || member.user?.email || 'U')[0].toUpperCase()}
+                                            </AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="text-sm font-medium">{member.user?.username || member.user?.email}</p>
+                                            <p className="text-sm font-medium">{member.user?.name || member.user?.email || 'Unknown User'}</p>
+                                            {member.user?.name && member.user?.email && (
+                                                <p className="text-[10px] text-muted-foreground">{member.user.email}</p>
+                                            )}
                                             <p className="text-xs text-muted-foreground capitalize">{member.role.toLowerCase()}</p>
                                         </div>
                                     </div>
