@@ -203,12 +203,12 @@ export function KanbanBoard({ projectId }: Props) {
                 <div className="flex items-center gap-2 w-full md:w-auto">
                     <Input
                         placeholder="Search tasks..."
-                        className="w-full md:w-[240px] h-9 bg-white dark:bg-gray-900"
+                        className="w-full md:w-[240px] h-9 bg-white dark:bg-zinc-950"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                     />
                     <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                        <SelectTrigger className="w-[130px] h-9 bg-white dark:bg-gray-900">
+                        <SelectTrigger className="w-[130px] h-9 bg-white dark:bg-zinc-950">
                             <SelectValue placeholder="Priority" />
                         </SelectTrigger>
                         <SelectContent>

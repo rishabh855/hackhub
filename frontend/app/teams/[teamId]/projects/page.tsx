@@ -85,13 +85,13 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
     if (status === 'loading' || loading) {
         return (
             <div className="space-y-6">
-                <div className="h-6 w-48 bg-white/5 rounded"></div>
+                <div className="h-6 w-48 bg-slate-200/60 dark:bg-white/5 rounded animate-pulse"></div>
                 <div className="flex justify-between">
-                    <div className="h-10 w-32 bg-white/5 rounded"></div>
-                    <div className="h-10 w-32 bg-white/5 rounded"></div>
+                    <div className="h-10 w-32 bg-slate-200/60 dark:bg-white/5 rounded animate-pulse"></div>
+                    <div className="h-10 w-32 bg-slate-200/60 dark:bg-white/5 rounded animate-pulse"></div>
                 </div>
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {[1, 2, 3].map(i => <div key={i} className="h-40 bg-white/5 border border-white/10 rounded-xl"></div>)}
+                    {[1, 2, 3].map(i => <div key={i} className="h-40 bg-slate-200/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl animate-pulse"></div>)}
                 </div>
             </div>
         );
@@ -116,14 +116,14 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
             <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                className="flex items-center gap-2 text-sm text-slate-400"
+                className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400"
             >
-                <Link href="/teams" className="hover:text-white transition-colors flex items-center gap-1">
+                <Link href="/teams" className="hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1">
                     <ArrowLeft className="w-4 h-4" />
                     Teams
                 </Link>
                 <span className="opacity-30">/</span>
-                <span className="font-medium text-white">{teamName || 'This Team'}</span>
+                <span className="font-medium text-slate-900 dark:text-white">{teamName || 'This Team'}</span>
             </motion.div>
 
             <motion.div
@@ -132,13 +132,14 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 transition={{ duration: 0.4, delay: 0.1 }}
                 className="flex items-center justify-between"
             >
-                <h1 className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400">Projects</h1>
+                <h1 className="text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400">Projects</h1>
                 <div className="flex items-center gap-2">
                     {isTeamOwner && (
                         <>
                             <Button
                                 variant="destructive"
                                 size="sm"
+                                className="cursor-pointer"
                                 onClick={async () => {
                                     if (confirm('Are you sure you want to delete this team? All projects and data will be permanently lost.')) {
                                         try {
@@ -154,7 +155,7 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                                 <Trash2 className="w-4 h-4 mr-2" /> Delete Team
                             </Button>
                             <InviteMembersModal teamId={teamId}>
-                                <Button variant="outline">
+                                <Button variant="outline" className="cursor-pointer">
                                     <Plus className="w-4 h-4 mr-2" /> Invite Members
                                 </Button>
                             </InviteMembersModal>
@@ -173,28 +174,28 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 {projects.map((project) => (
                     <motion.div key={project.id} variants={itemVariants} whileHover={{ y: -5, transition: { duration: 0.2 } }}>
                         <Link href={`/teams/${teamId}/projects/${project.id}`} className="block h-full group">
-                            <div className="h-full bg-white/5 backdrop-blur-md rounded-xl border border-white/10 group-hover:border-indigo-500/50 transition-all duration-300 p-6 flex flex-col shadow-lg group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)] relative overflow-hidden">
+                            <div className="h-full bg-white/80 dark:bg-white/5 backdrop-blur-md rounded-xl border border-slate-200 dark:border-white/10 group-hover:border-indigo-500/50 dark:group-hover:border-indigo-500/50 transition-all duration-300 p-6 flex flex-col shadow-sm group-hover:shadow-md dark:group-hover:shadow-[0_0_20px_rgba(79,70,229,0.15)] relative overflow-hidden">
 
                                 {/* Ambient inner glow on hover */}
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-transparent to-purple-500/0 group-hover:from-indigo-500/5 group-hover:to-purple-500/5 transition-colors duration-500 pointer-events-none" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/0 via-transparent to-purple-500/0 group-hover:from-indigo-500/5 dark:group-hover:from-indigo-500/10 group-hover:to-purple-500/5 dark:group-hover:to-purple-500/10 transition-colors duration-500 pointer-events-none" />
 
                                 <div className="flex flex-row items-center justify-between space-y-0 pb-4 relative z-10">
-                                    <h3 className="text-xl font-semibold text-white group-hover:text-indigo-200 transition-colors truncate pr-4">
+                                    <h3 className="text-xl font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-200 transition-colors truncate pr-4">
                                         {project.name}
                                     </h3>
-                                    <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-slate-300 group-hover:text-indigo-400 group-hover:bg-indigo-500/10 transition-colors flex-shrink-0">
+                                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 group-hover:bg-indigo-500/5 dark:group-hover:bg-indigo-500/10 transition-colors flex-shrink-0">
                                         <Folder className="h-4 w-4" />
                                     </div>
                                 </div>
 
-                                <div className="text-sm text-slate-400 line-clamp-2 min-h-[2.5rem] relative z-10">
+                                <div className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 min-h-[2.5rem] relative z-10">
                                     {project.description || 'No description provided.'}
                                 </div>
                                 <div className="flex items-center justify-between mt-auto pt-4 relative z-10">
                                     <div className="text-xs text-slate-500">
                                         Updated {project.updatedAt ? formatDistanceToNow(new Date(project.updatedAt), { addSuffix: true }) : 'recently'}
                                     </div>
-                                    <div className="text-xs text-slate-400 font-medium bg-white/5 px-2 py-1 rounded-md">
+                                    <div className="text-xs text-slate-600 dark:text-slate-400 font-medium bg-slate-100 dark:bg-white/5 px-2 py-1 rounded-md">
                                         {(() => {
                                             const user = project.members?.[0]?.user;
                                             if (!user) return 'Unknown';
@@ -204,11 +205,11 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                                     </div>
                                 </div>
                                 {isTeamOwner && (
-                                    <div className="mt-4 flex justify-end border-t border-white/5 pt-3 relative z-10">
+                                    <div className="mt-4 flex justify-end border-t border-slate-200/50 dark:border-t-white/5 pt-3 relative z-10">
                                         <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 h-7 px-2 text-xs rounded-lg transition-colors"
+                                            className="text-slate-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-500/5 dark:hover:bg-red-500/10 h-7 px-2 text-xs rounded-lg transition-colors cursor-pointer"
                                             onClick={async (e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -233,12 +234,12 @@ export default function ProjectsPage({ params }: { params: Promise<{ teamId: str
                 ))}
 
                 {projects.length === 0 && (
-                    <motion.div variants={itemVariants} className="col-span-full py-16 text-center rounded-2xl border-dashed border-2 border-white/10 bg-white/5 backdrop-blur-sm">
-                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/5 flex items-center justify-center text-slate-400">
+                    <motion.div variants={itemVariants} className="col-span-full py-16 text-center rounded-2xl border-dashed border-2 border-slate-200 dark:border-white/10 bg-white/80 dark:bg-white/5 backdrop-blur-sm shadow-sm">
+                        <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-500 dark:text-slate-400">
                             <Folder className="w-8 h-8 opacity-50" />
                         </div>
-                        <h3 className="text-lg font-medium text-white mb-2">No projects yet</h3>
-                        <p className="text-slate-400 mb-6">Create your first project to get started.</p>
+                        <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">No projects yet</h3>
+                        <p className="text-slate-600 dark:text-slate-400 mb-6">Create your first project to get started.</p>
                         <CreateProjectDialog teamId={teamId} onProjectCreated={fetchProjects} />
                     </motion.div>
                 )}

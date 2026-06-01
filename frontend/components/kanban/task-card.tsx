@@ -58,16 +58,16 @@ export function TaskCard({ task, deleteTask, onClick, role }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 25 }}
             >
-                <Card className="mb-3 cursor-grab hover:shadow-lg transition-all border border-white/5 bg-white/5 backdrop-blur-md hover:bg-white/10 hover:border-indigo-500/50 hover:shadow-[0_0_15px_rgba(79,70,229,0.15)] overflow-hidden relative group">
+                <Card className="mb-3 cursor-grab shadow-sm hover:shadow-md transition-all border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-white/5 backdrop-blur-md hover:bg-white/95 dark:hover:bg-white/10 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 overflow-hidden relative group">
                     <CardHeader className="p-4 pb-2 flex flex-row items-center justify-between space-y-0">
-                        <CardTitle className="text-sm font-medium leading-none text-slate-200 group-hover:text-indigo-200 transition-colors">
+                        <CardTitle className="text-sm font-medium leading-none text-slate-800 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-indigo-200 transition-colors">
                             {task.title}
                         </CardTitle>
                         {role === 'OWNER' && (
                             <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 text-gray-400 hover:text-red-500 transition-colors"
+                                className="h-6 w-6 text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
                                 onPointerDown={(e) => e.stopPropagation()}
                                 onClick={(e) => {
                                     e.stopPropagation();
@@ -81,17 +81,17 @@ export function TaskCard({ task, deleteTask, onClick, role }: Props) {
                     <CardContent className="p-4 pt-2 relative z-10">
                         <div className="flex items-center justify-between mt-2">
                             {task.description && (
-                                <p className="text-sm text-slate-400 line-clamp-2 mr-2 mb-2">
+                                <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2 mr-2 mb-2">
                                     {task.description}
                                 </p>
                             )}
                         </div>
                         <div className="flex items-center justify-between mt-2">
-                            <Badge variant="secondary" className={`${priorityColor} shadow-sm`}>
+                            <Badge variant="secondary" className={`${priorityColor} shadow-sm border-none`}>
                                 {task.priority}
                             </Badge>
                             {task.dueDate && (
-                                <span className="text-xs text-slate-400 bg-white/5 border border-white/10 px-2 py-1 rounded">
+                                <span className="text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 px-2 py-1 rounded">
                                     {new Date(task.dueDate).toLocaleDateString()}
                                 </span>
                             )}

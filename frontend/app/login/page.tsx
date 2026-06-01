@@ -17,27 +17,27 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-[#040814] relative overflow-hidden">
+        <div className="flex min-h-screen w-full flex-col items-center justify-center bg-slate-50/50 dark:bg-[#040814] relative overflow-hidden">
             {/* Background grain noise for texture */}
             <div 
-              className="absolute inset-0 opacity-[0.02] mix-blend-overlay pointer-events-none z-0"
+              className="absolute inset-0 opacity-[0.015] dark:opacity-[0.02] mix-blend-overlay pointer-events-none z-0"
               style={{ backgroundImage: "url('https://grainy-gradients.vercel.app/noise.svg')" }}
             />
             {/* Ambient glow */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none" />
 
             <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                className="z-10 w-full max-w-md p-8 md:p-10 space-y-8 bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 text-center relative"
+                className="z-10 w-full max-w-md p-8 md:p-10 space-y-8 bg-white/80 dark:bg-white/5 backdrop-blur-xl rounded-2xl shadow-xl border border-slate-200/80 dark:border-white/10 text-center relative"
             >
                 {/* Subtle pulse border effect on container hover */}
                 <motion.div
                     whileHover={{ opacity: 1 }}
                     initial={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-indigo-500/30 pointer-events-none"
+                    className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-indigo-500/20 dark:ring-indigo-500/30 pointer-events-none"
                 />
 
                 <div className="space-y-2">
@@ -51,14 +51,14 @@ export default function LoginPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                         </svg>
                     </motion.div>
-                    <h1 className="text-3xl font-bold tracking-tight text-white">Welcome Back</h1>
-                    <p className="text-sm text-slate-400">Sign in to your HackHub workspace.</p>
+                    <h1 className="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome Back</h1>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">Sign in to your HackHub workspace.</p>
                 </div>
 
                 <div className="space-y-3 pt-4">
                     <Button
                         variant="outline"
-                        className="w-full h-12 flex items-center gap-3 justify-center text-sm font-medium bg-white/5 border-white/10 hover:bg-white/10 hover:border-indigo-500/40 transition-all hover:shadow-[0_0_15px_rgba(79,70,229,0.15)] text-slate-200"
+                        className="w-full h-12 flex items-center gap-3 justify-center text-sm font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all text-slate-700 dark:text-slate-200 shadow-sm cursor-pointer"
                         onClick={() => handleLogin('google')}
                         asChild
                     >
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
                     <Button
                         variant="outline"
-                        className="w-full h-12 flex items-center gap-3 justify-center text-sm font-medium bg-white/5 border-white/10 hover:bg-white/10 hover:border-purple-500/40 transition-all hover:shadow-[0_0_15px_rgba(168,85,247,0.15)] text-slate-200"
+                        className="w-full h-12 flex items-center gap-3 justify-center text-sm font-medium bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/10 hover:border-purple-500/40 dark:hover:border-purple-500/40 transition-all text-slate-700 dark:text-slate-200 shadow-sm cursor-pointer"
                         onClick={() => handleLogin('github')}
                         asChild
                     >
@@ -89,7 +89,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="pt-6 relative z-10">
-                    <Link href="/" className="text-sm text-indigo-400 hover:text-indigo-300 hover:underline transition-colors">
+                    <Link href="/" className="text-sm text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 hover:underline transition-colors">
                         ← Back to Home
                     </Link>
                 </div>
