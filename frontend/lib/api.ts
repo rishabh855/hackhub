@@ -98,7 +98,7 @@ export async function inviteMember(teamId: string, email: string) {
     return res.json();
 }
 
-export async function createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; dueDate?: Date; labels?: string[]; isBlocked?: boolean; blockedReason?: string }, userId: string) {
+export async function createTask(data: { title: string; projectId: string; description?: string; priority?: string; assigneeId?: string; assigneeIds?: string[]; dueDate?: Date; labels?: string[]; isBlocked?: boolean; blockedReason?: string }, userId: string) {
     const headers = await getHeaders();
     headers['x-user-id'] = userId;
 
