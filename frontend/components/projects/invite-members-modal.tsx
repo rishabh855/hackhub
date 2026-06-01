@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { io } from 'socket.io-client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -36,6 +37,36 @@ export function InviteMembersModal({ teamId, children }: Props) {
             loadMembers();
         }
     }, [open]);
+
+    // WebSocket realtime sync for team members list
+    useEffect(() => {
+        if (!open || !session?.access_token) return;
+
+        const SOCKET_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000';
+        const socket = io(SOCKET_URL, {
+            auth: { token: session.access_token },
+            transports: ['websocket'],
+        });
+
+        socket.on('connect', () => {
+            console.log('[InviteMembersModal] Connected to socket, joining team room:', teamId);
+            socket.emit('joinTeam', teamId);
+        });
+
+        socket.on('memberJoined', (payload) => {
+            console.log('[InviteMembersModal] Realtime memberJoined event received:', payload);
+            loadMembers();
+        });
+
+        socket.on('memberRemoved', (payload) => {
+            console.log('[InviteMembersModal] Realtime memberRemoved event received:', payload);
+            loadMembers();
+        });
+
+        return () => {
+            socket.disconnect();
+        };
+    }, [open, teamId, session?.access_token]);
 
     // Auto-generate on tab switch
     useEffect(() => {

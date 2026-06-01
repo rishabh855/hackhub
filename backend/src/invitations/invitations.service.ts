@@ -3,13 +3,15 @@ import { PrismaService } from '../prisma.service';
 import * as crypto from 'crypto';
 import { ProjectRole } from '../projects/project-role.enum';
 import { EmailService } from '../email/email.service';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 @Injectable()
 export class InvitationsService {
     constructor(
         private prisma: PrismaService,
-        private emailService: EmailService
+        private emailService: EmailService,
+        private chatGateway: ChatGateway
     ) { }
 
     async createInvite(userId: string, teamId: string, type: 'EMAIL' | 'LINK' | 'CODE', email?: string) {
@@ -115,6 +117,47 @@ export class InvitationsService {
                 }
             })
         ]);
+
+        // Realtime notification logic
+        try {
+            const joiningUser = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, email: true }
+            });
+            const memberName = joiningUser?.name || joiningUser?.email || 'New Member';
+            const teamName = invite.team.name || 'the team';
+
+            // Find other members
+            const otherMembers = await this.prisma.teamMember.findMany({
+                where: {
+                    teamId: invite.teamId,
+                    userId: { not: userId }
+                },
+                select: { userId: true }
+            });
+
+            // Create database notifications and emit
+            for (const member of otherMembers) {
+                const notification = await this.prisma.notification.create({
+                    data: {
+                        userId: member.userId,
+                        title: 'New Team Member Joined',
+                        message: `${memberName} has joined team "${teamName}"`,
+                        type: 'MEMBER_JOINED',
+                    }
+                });
+                this.chatGateway.server.to(member.userId).emit('notification', notification);
+            }
+
+            // Emit memberJoined event to team room so member lists refresh instantly
+            this.chatGateway.server.to(invite.teamId).emit('memberJoined', {
+                teamId: invite.teamId,
+                userId,
+                memberName
+            });
+        } catch (err) {
+            console.error('Failed to send joining notifications:', err);
+        }
 
         return { message: 'Joined team successfully', teamId: invite.teamId };
     }

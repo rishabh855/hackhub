@@ -1,9 +1,13 @@
 import { Injectable, NotFoundException, ConflictException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { ChatGateway } from '../chat/chat.gateway';
 
 @Injectable()
 export class TeamsService {
-    constructor(private prisma: PrismaService) { }
+    constructor(
+        private prisma: PrismaService,
+        private chatGateway: ChatGateway
+    ) { }
 
     async createTeam(userId: string, name: string) {
         console.log(`Creating team '${name}' for user '${userId}'`);
@@ -91,6 +95,48 @@ export class TeamsService {
                 },
             });
             console.log('Member created:', member);
+
+            // Realtime notification logic
+            try {
+                const team = await this.prisma.team.findUnique({
+                    where: { id: teamId },
+                    select: { name: true }
+                });
+                const teamName = team?.name || 'the team';
+                const memberName = user.name || user.email || 'New Member';
+
+                // Find other members
+                const otherMembers = await this.prisma.teamMember.findMany({
+                    where: {
+                        teamId,
+                        userId: { not: user.id }
+                    },
+                    select: { userId: true }
+                });
+
+                // Create database notifications and emit
+                for (const other of otherMembers) {
+                    const notification = await this.prisma.notification.create({
+                        data: {
+                            userId: other.userId,
+                            title: 'New Team Member Joined',
+                            message: `${memberName} has joined team "${teamName}"`,
+                            type: 'MEMBER_JOINED',
+                        }
+                    });
+                    this.chatGateway.server.to(other.userId).emit('notification', notification);
+                }
+
+                // Emit memberJoined event to team room
+                this.chatGateway.server.to(teamId).emit('memberJoined', {
+                    teamId,
+                    userId: user.id,
+                    memberName
+                });
+            } catch (err) {
+                console.error('Failed to send joining notifications:', err);
+            }
+
             return member;
         } catch (error) {
             console.error('Error adding member:', error);
@@ -132,9 +178,22 @@ export class TeamsService {
             throw new NotFoundException('Member not found in this team');
         }
 
-        return this.prisma.teamMember.delete({
+        const deletedMember = await this.prisma.teamMember.delete({
             where: { id: memberIdToRemove }
         });
+
+        // Emit memberRemoved event so lists refresh instantly in real-time
+        try {
+            this.chatGateway.server.to(teamId).emit('memberRemoved', {
+                teamId,
+                memberId: memberIdToRemove,
+                userId: member.userId
+            });
+        } catch (err) {
+            console.error('Failed to emit memberRemoved socket event:', err);
+        }
+
+        return deletedMember;
     }
 
     async updateMemberRole(teamId: string, userId: string, memberIdToUpdate: string, role: string) {

@@ -4,9 +4,10 @@ import { InvitationsController } from './invitations.controller';
 import { PrismaService } from '../prisma.service';
 import { ProjectsModule } from '../projects/projects.module';
 import { EmailModule } from '../email/email.module';
+import { ChatModule } from '../chat/chat.module';
 
 @Module({
-    imports: [ProjectsModule, EmailModule],
+    imports: [ProjectsModule, EmailModule, ChatModule],
     controllers: [InvitationsController],
     providers: [InvitationsService, PrismaService],
     exports: [InvitationsService],
